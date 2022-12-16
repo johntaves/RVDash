@@ -5,8 +5,298 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RVDash"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        ResizeMode="NoResize"
+        WindowStyle="ThreeDBorderWindow"
+        Height="1080" Width="1920">
+  <Canvas >
+    <Canvas.Background>
+      <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="#FF552322" Offset="1"/>
+        <GradientStop Color="#FFFFFFFF" Offset="0"/>
+      </LinearGradientBrush>
+    </Canvas.Background>
+    <Border BorderThickness="0" Canvas.Left="550" Canvas.Top="260" Background="DarkGray">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding speed}" x:Name="Speed" Width="250" 
+              TextAlignment="Right" FontSize="180" Foreground="White" FontFamily="Arial" />
+    </Border>
+    <TextBlock Text="{Binding errs}" x:Name="Errs" Width="200" Canvas.Left="600" Canvas.Top="0" 
+          TextAlignment="Right"    FontSize="40" Foreground="LightGray" FontFamily="Arial" />
+    <ListView Grid.Row="0" Name="lstCodes" Height="502" Width="500"
+                 ItemsSource="{Binding MsgList}" HorizontalAlignment="Center" Canvas.Left="3" Canvas.Top="3" VerticalAlignment="Top">
+      <ListView.View>
+        <GridView x:Name="grdNames">
+          <GridViewColumn Header="###" DisplayMemberBinding="{Binding Time}"/>
+          <GridViewColumn Header="Code__________" DisplayMemberBinding="{Binding Code}"/>
+          <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
+          <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>
+          <GridViewColumn Header="PID__________________________________" DisplayMemberBinding="{Binding PID}"/>
+          <GridViewColumn Header="RawData________________________________________" DisplayMemberBinding="{Binding RawData}"/>
+        </GridView>
+      </ListView.View>
+    </ListView>
+    <Border BorderThickness="10" Canvas.Left="156" Canvas.Top="510" Background="DarkGray">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding volts}" x:Name="Volts" Width="200"
+               FontSize="80" Foreground="LightGray" FontFamily="Arial" />
+    </Border>
+    <Border BorderThickness="10" Canvas.Left="565" Canvas.Top="510" Background="DarkGray" HorizontalAlignment="Left" VerticalAlignment="Center">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding miles}" x:Name="Odo" Width="200"
+            TextAlignment="Right"   FontSize="40" Foreground="LightGray" FontFamily="Arial" />
+    </Border>
+    <local:CircularGaugeControl x:Name="Water"  Canvas.Left="500" Canvas.Top="670"
+                                        Radius="150" 
+                                        ScaleRadius="100" 
+                                        ScaleStartAngle="140" 
+                                        ScaleSweepAngle="270"
+                                        PointerLength="90" 
+                                        PointerCapRadius="35" 
+                                        MinValue="0" 
+                                        MaxValue="250" 
+                                        MajorDivisionsCount="10" 
+                                        MinorDivisionsCount="5" 
+                                        OptimalRangeStartValue="140"
+                                        OptimalRangeEndValue="200"
+                                        CurrentValue="{Binding water}"
+                                        RangeIndicatorThickness="9"
+                                        RangeIndicatorRadius="80"
+                                        RangeIndicatorLightRadius="10"
+                                        RangeIndicatorLightOffset="80"
+                                        ScaleLabelRadius="115"
+                                        ScaleLabelSize="40,20"
+                                        ScaleLabelFontSize="10"
+                                        ScaleLabelForeground="White"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="White"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="CornflowerBlue"
+                                        PointerThickness ="5"
+                                        DialTextOffset="40"
+                                        DialText="Coolant Temp"
+                                        DialTextColor="DarkBlue"
+                                        DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        />
 
-    </Grid>
+    <local:CircularGaugeControl x:Name="transTemp"  Canvas.Left="810" Canvas.Top="670"
+                                        Radius="150" 
+                                        ScaleRadius="100" 
+                                        ScaleStartAngle="140" 
+                                        ScaleSweepAngle="270"
+                                        PointerLength="90" 
+                                        PointerCapRadius="35" 
+                                        MinValue="0" 
+                                        MaxValue="250" 
+                                        MajorDivisionsCount="10" 
+                                        MinorDivisionsCount="5" 
+                                        OptimalRangeStartValue="140"
+                                        OptimalRangeEndValue="200"
+                                        CurrentValue="{Binding transTemp}"
+                                        RangeIndicatorThickness="9"
+                                        RangeIndicatorRadius="80"
+                                        RangeIndicatorLightRadius="10"
+                                        RangeIndicatorLightOffset="80"
+                                        ScaleLabelRadius="115"
+                                        ScaleLabelSize="40,20"
+                                        ScaleLabelFontSize="10"
+                                        ScaleLabelForeground="White"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="White"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="CornflowerBlue"
+                                        PointerThickness ="5"
+                                        DialTextOffset="40"
+                                        DialText="Trans Temp"
+                                        DialTextColor="DarkBlue"
+                                        DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        />
+
+    <local:CircularGaugeControl x:Name="Fuel" Canvas.Left="1168" Canvas.Top="670"
+                                        Radius="150" 
+                                        ScaleRadius="120" 
+                                        PointerLength="110" 
+                                        PointerCapRadius="35" 
+                                        ScaleStartAngle="160" 
+                                        ScaleSweepAngle="220"
+                                        MinValue="0" 
+                                        MaxValue="100" 
+                                        MajorDivisionsCount="4" 
+                                        MinorDivisionsCount="2" 
+                                        CurrentValue="{Binding fuel}"
+                                        ScaleLabelForeground="LightGray"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="LightGray"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="DarkGreen" 
+                                        PointerThickness ="16"
+                                        OptimalRangeStartValue="20"
+                                        OptimalRangeEndValue="100" 
+                                        DialTextOffset="40" 
+                                        DialText="Fuel"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        />
+
+    <local:CircularGaugeControl x:Name="Oil" Canvas.Left="163" Canvas.Top="670"
+                                        Radius="150" 
+                                        ScaleRadius="120" 
+                                        PointerLength="110" 
+                                        PointerCapRadius="35" 
+                                        ScaleLabelRadius="100"
+                                        ScaleLabelSize="40,30"
+                                        ScaleLabelFontSize="18"
+                                        ScaleStartAngle="180" 
+                                        ScaleSweepAngle="180"
+                                        MinValue="0" 
+                                        MaxValue="150" 
+                                        MajorDivisionsCount="10" 
+                                        CurrentValue="{Binding oil}"
+                                        ScaleLabelForeground="LightGray"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="LightGray"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="DarkBlue"
+                                        PointerThickness ="16"
+                                        OptimalRangeStartValue="300"
+                                        OptimalRangeEndValue="700" 
+                                        DialTextOffset="40" 
+                                        DialText="Oil Pressure"
+                                        DialTextColor="Black"
+                                        />
+
+    <local:CircularGaugeControl x:Name="Boost" Canvas.Left="1468" Canvas.Top="670"
+                                        Radius="150" 
+                                        ScaleRadius="120" 
+                                        PointerLength="110" 
+                                        PointerCapRadius="35" 
+                                        ScaleLabelRadius="100"
+                                        ScaleLabelSize="40,30"
+                                        ScaleLabelFontSize="18"
+                                        ScaleStartAngle="180" 
+                                        ScaleSweepAngle="180"
+                                        MinValue="0" 
+                                        MaxValue="150" 
+                                        MajorDivisionsCount="10" 
+                                        CurrentValue="{Binding boost}"
+                                        ScaleLabelForeground="LightGray"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="LightGray"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="Black"
+                                        PointerThickness ="16"
+                                        OptimalRangeStartValue="300"
+                                        OptimalRangeEndValue="700" 
+                                        DialTextOffset="40" 
+                                        DialText="Turbo"
+                                        DialTextColor="Black"
+                                        />
+
+    <local:CircularGaugeControl x:Name="AirPrim" Canvas.Left="1350" Canvas.Top="63"
+                                        Radius="150" 
+                                        ScaleRadius="120" 
+                                        PointerLength="110" 
+                                        PointerCapRadius="35" 
+                                        ScaleLabelRadius="100"
+                                        ScaleLabelSize="40,30"
+                                        ScaleLabelFontSize="18"
+                                        ScaleStartAngle="180" 
+                                        ScaleSweepAngle="180"
+                                        MinValue="0" 
+                                        MaxValue="150" 
+                                        MajorDivisionsCount="10" 
+                                        CurrentValue="{Binding airPrim}"
+                                        ScaleLabelForeground="LightGray"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="LightGray"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="Black"
+                                        PointerThickness ="16"
+                                        OptimalRangeStartValue="300"
+                                        OptimalRangeEndValue="700" 
+                                        DialTextOffset="40" 
+                                        DialText="Front Air"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        />
+
+    <local:CircularGaugeControl x:Name="AirSec" Canvas.Left="1350" Canvas.Top="394"
+                                        Radius="150" 
+                                        ScaleRadius="120" 
+                                        PointerLength="110" 
+                                        PointerCapRadius="35" 
+                                        ScaleLabelRadius="100"
+                                        ScaleLabelSize="40,30"
+                                        ScaleLabelFontSize="18"
+                                        ScaleStartAngle="180" 
+                                        ScaleSweepAngle="180"
+                                        MinValue="0" 
+                                        MaxValue="150" 
+                                        MajorDivisionsCount="10" 
+                                        CurrentValue="{Binding airSec}"
+                                        ScaleLabelForeground="LightGray"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="LightGray"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="Black"
+                                        PointerThickness ="16"
+                                        OptimalRangeStartValue="300"
+                                        OptimalRangeEndValue="700" 
+                                        DialTextOffset="40" 
+                                        DialText="Rear Air"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        />
+
+    <!--DarkSlateGray gauge-->
+    <local:CircularGaugeControl x:Name="RPM" Canvas.Left="848" Canvas.Top="194"
+                                        Radius="200" 
+                                        ScaleRadius="160" 
+                                        ScaleStartAngle="120" 
+                                        ScaleLabelRadius="110"
+                                        ResetPointerOnStartUp="True"
+                                        ScaleSweepAngle="300"
+                                        PointerLength="150" 
+                                        PointerCapRadius="35" 
+                                        MinValue="0" 
+                                        MaxValue="3500" 
+                                        MajorDivisionsCount="7" 
+                                        MinorDivisionsCount="5" 
+                                        CurrentValue="{Binding rpm}"
+                                        ScaleLabelSize="80,40"
+                                        ScaleLabelFontSize="22"
+                                        ScaleLabelForeground="White"
+                                        MajorTickSize="30,3"
+                                        MinorTickSize="9,1"
+                                        MajorTickColor="DarkGray"
+                                        MinorTickColor="DarkGray"
+                                        GaugeBackgroundColor="DarkSlateGray"
+                                        PointerThickness ="12"
+                                        DialTextOffset="40"
+                                        DialText="RPM"
+                                        DialTextColor="DarkSlateGray"
+                                        >
+
+
+    </local:CircularGaugeControl>
+
+  </Canvas>
 </Window>
