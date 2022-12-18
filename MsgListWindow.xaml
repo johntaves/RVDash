@@ -1,0 +1,25 @@
+﻿<Window x:Class="RVDash.MsgListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RVDash"
+        mc:Ignorable="d"
+        Title="MsgListWindow" Height="450" Width="800">
+    <Grid>
+    <ListView Grid.Row="0" Name="lstCodes" Height="502" Width="500"
+                 ItemsSource="{Binding MsgList}" HorizontalAlignment="Center" Canvas.Left="3" Canvas.Top="3" VerticalAlignment="Top">
+      <ListView.View>
+        <GridView x:Name="grdNames">
+          <GridViewColumn Header="###" DisplayMemberBinding="{Binding Cnt}"/>
+          <GridViewColumn Header="Code__________" DisplayMemberBinding="{Binding Code}"/>
+          <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
+          <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>
+          <GridViewColumn Header="PID__________________________________" DisplayMemberBinding="{Binding PID}"/>
+          <GridViewColumn Header="RawData________________________________________" DisplayMemberBinding="{Binding RawData}"/>
+        </GridView>
+      </ListView.View>
+    </ListView>
+
+  </Grid>
+</Window>
