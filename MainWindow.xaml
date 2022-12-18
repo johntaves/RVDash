@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:RVDash"
         mc:Ignorable="d"
         ResizeMode="NoResize"
-        WindowStyle="ThreeDBorderWindow"
+        WindowStyle="None"
         Height="1080px" Width="1920px">
   <Canvas >
     <Canvas.Background>
@@ -15,7 +15,7 @@
         <GradientStop Color="#FFFFFFFF" Offset="0"/>
       </LinearGradientBrush>
     </Canvas.Background>
-    <Border BorderThickness="0" Canvas.Left="550" Canvas.Top="260" Background="DarkGray">
+    <Border BorderThickness="10" Canvas.Left="630" Canvas.Top="259" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
@@ -25,9 +25,19 @@
       <TextBlock Text="{Binding speed}" x:Name="Speed" Width="250" 
               TextAlignment="Right" FontSize="180" Foreground="White" FontFamily="Arial" />
     </Border>
+    <Border BorderThickness="10" Canvas.Left="413" Canvas.Top="304" Background="DarkGray">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding setspeed}" x:Name="SetSpeed" Width="140" 
+              TextAlignment="Right" FontSize="100" Foreground="White" FontFamily="Arial" />
+    </Border>
     <TextBlock Text="{Binding errs}" x:Name="Errs" Width="200" Canvas.Left="600" Canvas.Top="0" 
           TextAlignment="Right"    FontSize="40" Foreground="LightGray" FontFamily="Arial" />
-    <Border BorderThickness="10" Canvas.Left="156" Canvas.Top="510" Background="DarkGray">
+    <Border BorderThickness="10" Canvas.Left="131" Canvas.Top="161" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
@@ -225,7 +235,7 @@
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl x:Name="AirSec" Canvas.Left="1350" Canvas.Top="394"
+    <local:CircularGaugeControl x:Name="AirSec" Canvas.Left="1500" Canvas.Top="363"
                                         Radius="150" 
                                         ScaleRadius="120" 
                                         PointerLength="110" 
@@ -254,7 +264,7 @@
                                         />
 
     <!--DarkSlateGray gauge-->
-    <local:CircularGaugeControl x:Name="RPM" Canvas.Left="848" Canvas.Top="194"
+    <local:CircularGaugeControl x:Name="RPM" Canvas.Left="918" Canvas.Top="171"
                                         Radius="200" 
                                         ScaleRadius="160" 
                                         ScaleStartAngle="120" 
@@ -264,7 +274,7 @@
                                         PointerLength="150" 
                                         PointerCapRadius="35" 
                                         MinValue="0" 
-                                        MaxValue="3500" 
+                                        MaxValue="35" 
                                         MajorDivisionsCount="7" 
                                         MinorDivisionsCount="5" 
                                         CurrentValue="{Binding rpm}"
@@ -284,7 +294,20 @@
 
 
     </local:CircularGaugeControl>
-    <Label Content="Volts:" Canvas.Left="55" Canvas.Top="543" FontSize="40"/>
-
+    <Label Content="Volts:" Canvas.Left="30" Canvas.Top="194" FontSize="40"/>
+    <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
+    <TextBlock FontSize="30" Background="{Binding leftturn}" Canvas.Left="292" Text="Left" Canvas.Top="427" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+    <TextBlock FontSize="30" Background="{Binding rightturn}" Canvas.Left="1398" Text="Right" Canvas.Top="427"/>
+    <TextBlock FontSize="30" Background="{Binding cruise}" Canvas.Left="1070" Text="Cruise" Canvas.Top="594"/>
+    <TextBlock FontSize="30" Background="{Binding lowair}" Canvas.Left="950" Text="Low&#10;Air" Canvas.Top="590"/>
+    <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+    <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+    <TextBlock FontSize="30" Background="{Binding wait}" Canvas.Left="524" Text="Wait To&#10;Start" Canvas.Top="591"/>
+    <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="420" Text="Ret" Canvas.Top="532"/>
+    <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="420" Text="Ret" Canvas.Top="473"/>
+    <StackPanel Orientation="Horizontal" Canvas.Top="0" Canvas.Left="30">
+      <Label Content="Intake Temp" FontSize="50" />
+      <TextBox Text="{Binding inttemp}" FontSize="50" />
+    </StackPanel>
   </Canvas>
 </Window>

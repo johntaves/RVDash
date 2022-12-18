@@ -4,6 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net7.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>icons8-speed-96.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,13 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="7.0.0" />
+    <Content Include="icons8-speed-96.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ZylSerialPort">
-      <HintPath>ZylSerialPort.dll</HintPath>
-    </Reference>
+    <PackageReference Include="System.IO.Ports" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

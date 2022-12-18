@@ -1,99 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Formats.Tar;
 using System.IO;
 using System.IO.Ports;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Threading;
-using Microsoft.Win32;
+using System.Windows.Forms;
 
 namespace RVDash;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-/// 
-[Serializable]
-public class SerRead
-{
-    private SerialPort sp=null;
-	private Dat d;
-    byte readPos = 0, writePos = 0;
-    byte[] data = new byte[256];
-    public SerRead(int port = 0,int size=0, string fn = "")
-    {
-        d = new Dat(size,fn);
-        if (!d.sim)
-        {
-            sp = new SerialPort();
-            sp.PortName = string.Format("COM{0}",port);
-            sp.BaudRate = 9600;
-            sp.StopBits = StopBits.One;
-            sp.DataBits = 8;
-            sp.Parity = Parity.None;
-            sp.Open();
-        }
-    }
-
-    public void pause()
-    {
-        d.pause = true;
-    }
-    private int ReadCapt(byte[] buf, int offset, int count)
-    {
-        int ret = 0;
-        while (ret < count)
-        {
-            int i = sp.Read(buf, offset, 1);
-            if (i == 1)
-                d.add(buf[offset]);
-            offset += i;
-            ret += i;
-        }
-        return ret;
-    } 
-    private void Read()
-    {
-        int amt;
-        if (readPos <= writePos)
-        {
-            amt = 256 - writePos;
-            if (readPos == 0) amt--;
-        }
-        else amt = readPos - writePos - 1;
-        if (amt > 25) amt = 25;
-        int len;
-        if (sp != null && !d.capt)
-            len = sp.Read(data, writePos, amt);
-        else if (sp != null)
-            len = ReadCapt(data, writePos, amt);
-        else len = d.read(data, writePos, amt);
-        writePos += (byte)len;
-    }
-    public byte getNext()
-    {
-        while (readPos == writePos)
-            Read();
-        return data[readPos++];
-    }
-    public byte getNextOOW()
-    {
-        byte ret;
-        while ((ret = getNext()) < 128) ;
-        return ret;
-    }
-}
 
 public partial class MainWindow : Window
 {
@@ -111,8 +26,19 @@ public partial class MainWindow : Window
         Thread tVDC = new Thread(readLoop);
 		mlw = new MsgListWindow();
         mlw.Show();
-		tECU.Start(new SerRead(5,0,@"c:\users\john\Downloads\binE.dat"));
-	    tVDC.Start(new SerRead(6));
+        foreach (Screen s in System.Windows.Forms.Screen.AllScreens)
+        {
+            if (s.Bounds.Width == 1920)
+            {
+                this.Left = s.Bounds.Left;
+                this.Top = s.Bounds.Top;
+                this.WindowState = WindowState.Maximized;
+                break;
+            }
+        }
+
+        tECU.Start(new SerRead(5,0,@"binE.dat"));
+	    //tVDC.Start(new SerRead(6));
     }
     void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -197,7 +123,8 @@ public partial class MainWindow : Window
             if (!outOfWhack)
                 foreach (Msg m in toSend)
                 {
-                    if (m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
+                    if (false && m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
+                    if (RemPIDs.Contains(m.pid)) continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
                         msgs[m.Code] = DateTime.Now;
@@ -210,6 +137,9 @@ public partial class MainWindow : Window
     private static HashSet<int> InstPIDs =>
         new HashSet<int>()
             { 84,96,100,102,110,117,118,168,177,190,245 };
+    private static HashSet<int> RemPIDs =>
+        new HashSet<int>()
+            { 2,3,71,83,89,91,187,194 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 	public void DoUIChange()
     {
@@ -223,20 +153,29 @@ public partial class MainWindow : Window
                 m = queue.Dequeue();
             }
             gauges.errs = OOWCnt;
+            int val = 0;
+            try { val = Convert.ToInt32(m.value); } catch (Exception e) { }
+            
             switch (m.pid)
             {
-                case 44: int val = Convert.ToInt32(m.value); gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
-                case 84: gauges.speed = Convert.ToInt32(m.value) / 2; break;
-                case 96: gauges.fuel = Convert.ToInt32(m.value) / 2; break;
-                case 100: gauges.oil = Convert.ToInt32(m.value) / 2; break;
-                case 102: gauges.boost = Convert.ToInt32(m.value) / 8; break;
-                case 110: gauges.water = Convert.ToInt32(m.value); break;
-                case 117: gauges.airPrim = Convert.ToInt32(m.value) * 3 / 5; break;
-                case 118: gauges.airSec = Convert.ToInt32(m.value) * 3 / 5; break;
+                case 44: gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
+                case 40: gauges.retardersw = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
+                case 47: gauges.retarder = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
+                case 70: gauges.brake = (val & 0x80) > 0 ? "Red" : "DarkGray"; break;
+                case 84: gauges.speed = val / 2; break;
+                case 85: gauges.cruise = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
+                case 86: gauges.setspeed = val / 2; break;
+                case 96: gauges.fuel = val / 2; break;
+                case 100: gauges.oil = val / 2; break;
+                case 102: gauges.boost = val / 8; break;
+                case 105: gauges.inttemp = val; break;
+                case 110: gauges.water = val; break;
+                case 117: gauges.airPrim = val * 3 / 5; break;
+                case 118: gauges.airSec = val * 3 / 5; break;
                 //2 byte
                 case 168: gauges.volts = (Convert.ToDecimal(m.value) * .05M).ToString("F1"); break;
-                case 177: gauges.transTemp = Convert.ToInt16(m.value) / 4; break;
-                case 190: gauges.rpm = Convert.ToInt32(m.value) / 4; break;
+                case 177: gauges.transTemp = val / 4; break;
+                case 190: gauges.rpm = (double)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
                 default:
@@ -244,6 +183,74 @@ public partial class MainWindow : Window
 					break;
             }
         }
+    }
+}
+public class SerRead
+{
+    private SerialPort sp = null;
+    private Dat d;
+    byte readPos = 0, writePos = 0;
+    byte[] data = new byte[256];
+    public SerRead(int port = 0, int size = 0, string fn = "")
+    {
+        d = new Dat(size, fn);
+        if (!d.sim)
+        {
+            sp = new SerialPort();
+            sp.PortName = string.Format("COM{0}", port);
+            sp.BaudRate = 9600;
+            sp.StopBits = StopBits.One;
+            sp.DataBits = 8;
+            sp.Parity = Parity.None;
+            sp.Open();
+        }
+    }
+    public void pause()
+    {
+        d.pause = true;
+    }
+    private int ReadCapt(byte[] buf, int offset, int count)
+    {
+        int ret = 0;
+        while (ret < count)
+        {
+            int i = sp.Read(buf, offset, 1);
+            if (i == 1)
+                d.add(buf[offset]);
+            offset += i;
+            ret += i;
+        }
+        return ret;
+    }
+    private void Read()
+    {
+        int amt;
+        if (readPos <= writePos)
+        {
+            amt = 256 - writePos;
+            if (readPos == 0) amt--;
+        }
+        else amt = readPos - writePos - 1;
+        if (amt > 25) amt = 25;
+        int len;
+        if (sp != null && !d.capt)
+            len = sp.Read(data, writePos, amt);
+        else if (sp != null)
+            len = ReadCapt(data, writePos, amt);
+        else len = d.read(data, writePos, amt);
+        writePos += (byte)len;
+    }
+    public byte getNext()
+    {
+        while (readPos == writePos)
+            Read();
+        return data[readPos++];
+    }
+    public byte getNextOOW()
+    {
+        byte ret;
+        while ((ret = getNext()) < 128) ;
+        return ret;
     }
 }
 public class Msg
@@ -355,7 +362,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _idiotlight, value, "idiotlight");
 		}
 	}
-	private int _speed;
+    private int _speed;
     public int speed
     {
         get
@@ -365,6 +372,18 @@ public class Gauges : INotifyPropertyChanged
         set
         {
             SetField(ref _speed, value, "speed");
+        }
+    }
+    private int _setspeed;
+    public int setspeed
+    {
+        get
+        {
+            return _setspeed;
+        }
+        set
+        {
+            SetField(ref _setspeed, value, "setspeed");
         }
     }
     private int _oil;
@@ -391,8 +410,8 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _water, value, "water");
         }
     }
-    private int _rpm;
-    public int rpm
+    private double _rpm;
+    public double rpm
     {
         get
         {
@@ -463,6 +482,151 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _miles, value, "miles");
         }
     }
+
+    private string _retarder;
+    public string retarder
+    {
+        get
+        {
+            return _retarder;
+        }
+        set
+        {
+            SetField(ref _retarder, value, "retarder");
+        }
+    }
+    private string _retardersw;
+    public string retardersw
+    {
+        get
+        {
+            return _retardersw;
+        }
+        set
+        {
+            SetField(ref _retardersw, value, "retardersw");
+        }
+    }
+    private string _wait;
+    public string wait
+    {
+        get
+        {
+            return _wait;
+        }
+        set
+        {
+            SetField(ref _wait, value, "wait");
+        }
+    }
+    private string _brake;
+    public string brake
+    {
+        get
+        {
+            return _brake;
+        }
+        set
+        {
+            SetField(ref _brake, value, "brake");
+        }
+    }
+    private string _cruise;
+    public string cruise
+    {
+        get
+        {
+            return _cruise;
+        }
+        set
+        {
+            SetField(ref _cruise, value, "cruise");
+        }
+    }
+    private string _leftturn;
+    public string leftturn
+    {
+        get
+        {
+            return _leftturn;
+        }
+        set
+        {
+            SetField(ref _leftturn, value, "leftturn");
+        }
+    }
+    private string _rightturn;
+    public string rightturn
+    {
+        get
+        {
+            return _rightturn;
+        }
+        set
+        {
+            SetField(ref _rightturn, value, "rightturn");
+        }
+    }
+    private string _lowair;
+    public string lowair
+    {
+        get
+        {
+            return _lowair;
+        }
+        set
+        {
+            SetField(ref _lowair, value, "lowair");
+        }
+    }
+    private string _lowwater;
+    public string lowwater
+    {
+        get
+        {
+            return _lowwater;
+        }
+        set
+        {
+            SetField(ref _lowwater, value, "lowwater");
+        }
+    }
+    private string _stopeng;
+    public string stopeng
+    {
+        get
+        {
+            return _stopeng;
+        }
+        set
+        {
+            SetField(ref _stopeng, value, "stopeng");
+        }
+    }
+    private string _checkeng;
+    public string checkeng
+    {
+        get
+        {
+            return _checkeng;
+        }
+        set
+        {
+            SetField(ref _checkeng, value, "checkeng");
+        }
+    }
+    private string _engprot;
+    public string engprot
+    {
+        get
+        {
+            return _engprot;
+        }
+        set
+        {
+            SetField(ref _engprot, value, "engprot");
+        }
+    }
     private int _fuel;
     public int fuel
     {
@@ -473,6 +637,18 @@ public class Gauges : INotifyPropertyChanged
         set
         {
             SetField(ref _fuel, value, "fuel");
+        }
+    }
+    private int _inttemp;
+    public int inttemp
+    {
+        get
+        {
+            return _inttemp;
+        }
+        set
+        {
+            SetField(ref _inttemp, value, "inttemp");
         }
     }
     private int _errs;
@@ -501,7 +677,7 @@ public class Dat
     public bool sim = false, capt = false, pause = false;
     public Dat(int size = 0, string fn = "")
     {
-		fileName = fn;
+		fileName = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"),"Downloads",fn);
 		if (size > 0) {
 			buf = new byte[size];
 			ms = new int[size];
