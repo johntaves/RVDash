@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:RVDash"
         mc:Ignorable="d"
         ResizeMode="NoResize"
-        WindowStyle="None"
+        WindowStyle="SingleBorderWindow"
         Height="1080px" Width="1920px">
   <Canvas >
     <Canvas.Background>
@@ -25,7 +25,47 @@
       <TextBlock Text="{Binding speed}" x:Name="Speed" Width="250" 
               TextAlignment="Right" FontSize="180" Foreground="White" FontFamily="Arial" />
     </Border>
-    <Border BorderThickness="10" Canvas.Left="413" Canvas.Top="304" Background="DarkGray">
+    <Border BorderThickness="10" Canvas.Left="740" Canvas.Top="63" Background="DarkGray">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding tranattain}" Width="140" 
+              TextAlignment="Right" FontSize="100" Foreground="White" FontFamily="Arial" />
+    </Border>
+    <Border BorderThickness="10" Canvas.Left="540" Canvas.Top="63" Background="DarkGray" HorizontalAlignment="Left" VerticalAlignment="Center">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding transel}" Width="140" 
+              TextAlignment="Right" FontSize="100" Foreground="White" FontFamily="Arial" />
+    </Border>
+    <Border BorderThickness="10" Canvas.Left="55" Canvas.Top="315" Background="DarkGray">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding instfuel}" Width="140" 
+              TextAlignment="Right" FontSize="100" Foreground="White" FontFamily="Arial" />
+    </Border>
+    <Border BorderThickness="10" Canvas.Left="55" Canvas.Top="473" Background="DarkGray" HorizontalAlignment="Left" VerticalAlignment="Top">
+      <Border.BorderBrush>
+        <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
+          <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
+          <GradientStop Color="#FF226494"/>
+        </LinearGradientBrush>
+      </Border.BorderBrush>
+      <TextBlock Text="{Binding avgfuel}" Width="140" 
+              TextAlignment="Right" FontSize="100" Foreground="White" FontFamily="Arial" />
+    </Border>
+    <Border BorderThickness="10" Canvas.Left="441" Canvas.Top="304" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
