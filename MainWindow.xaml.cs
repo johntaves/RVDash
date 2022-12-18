@@ -1,15 +1,20 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Tar;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -24,7 +29,8 @@ public class SerRead
 {
     private SerialPort sp=null;
 	private Dat d;
-	public int lastTime=0;
+    byte readPos = 0, writePos = 0;
+    byte[] data = new byte[256];
     public SerRead(int port = 0,int size=0, string fn = "")
     {
         d = new Dat(size,fn);
@@ -39,6 +45,7 @@ public class SerRead
             sp.Open();
         }
     }
+
     public void pause()
     {
         d.pause = true;
@@ -54,16 +61,37 @@ public class SerRead
             offset += i;
             ret += i;
         }
-        lastTime = d.lastTime;
         return ret;
     } 
-    public int Read(byte[] buf, int offset, int count)
+    private void Read()
     {
+        int amt;
+        if (readPos <= writePos)
+        {
+            amt = 256 - writePos;
+            if (readPos == 0) amt--;
+        }
+        else amt = readPos - writePos - 1;
+        if (amt > 25) amt = 25;
+        int len;
         if (sp != null && !d.capt)
-            return sp.Read(buf, offset, count);
-        if (sp != null)
-            return ReadCapt(buf, offset, count);
-        return d.read(buf, offset, count);
+            len = sp.Read(data, writePos, amt);
+        else if (sp != null)
+            len = ReadCapt(data, writePos, amt);
+        else len = d.read(data, writePos, amt);
+        writePos += (byte)len;
+    }
+    public byte getNext()
+    {
+        while (readPos == writePos)
+            Read();
+        return data[readPos++];
+    }
+    public byte getNextOOW()
+    {
+        byte ret;
+        while ((ret = getNext()) < 128) ;
+        return ret;
     }
 }
 
@@ -82,8 +110,8 @@ public partial class MainWindow : Window
         Thread tECU = new Thread(readLoop);
         Thread tVDC = new Thread(readLoop);
 
-		//tECU.Start(new SerRead(5,5000,@"c:\users\john\Downloads\bin.dat"));
-	    tVDC.Start(new SerRead(6));
+		tECU.Start(new SerRead(6,0,@"c:\users\hp\Downloads\bin.dat"));
+	    //tVDC.Start(new SerRead(6));
     }
     void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -97,46 +125,81 @@ public partial class MainWindow : Window
     }
     private void readLoop(object sr)
     {
-        byte sum = 0;
         SerRead serialPort = (SerRead)sr;
-        byte readPos=0, writePos = 0;
         bool outOfWhack = false;
-        var data = new byte[256];
         Dictionary<string,DateTime> msgs = new Dictionary<string,DateTime>();
 
-        while (!done)
+        while (!done) // 1 message, many PID in each loop
         {
-            int amt;
-            if (readPos <= writePos)
-            {
-                amt = 256 - writePos;
-                if (readPos == 0) amt--;
-            }
-            else amt = readPos - writePos - 1;
-            if (amt > 25) amt = 25;
-            var len = serialPort.Read(data, writePos, amt);
-            writePos += (byte)len;
-
+            byte MID;
             if (outOfWhack)
+            {
                 OOWCnt++;
-            while (outOfWhack && readPos != writePos)
-            {
-                if (data[readPos] == 140)
-                    outOfWhack = false;
-                else
-                    readPos += 1;
+                MID = serialPort.getNextOOW();
+                outOfWhack = false;
             }
-            while (!outOfWhack && (byte)(writePos-readPos) > 3)
+            else MID = serialPort.getNext();
+            byte sum = MID;
+            object value = 0;
+            int packetLen = 0;
+
+            while (!outOfWhack)
             {
-                Msg m = new();
-                if (!m.set(data,ref readPos, writePos,ref outOfWhack) || outOfWhack)
+                byte rPid = serialPort.getNext();
+                sum += rPid;
+                packetLen++;
+                if (sum == 0)
                     break;
-                m.time = serialPort.lastTime;
-                if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
+                UInt16 pid = (UInt16)rPid;
+                if (rPid == 255)
                 {
-                    msgs[m.Code] = DateTime.Now;
-                    lock (queue) queue.Enqueue(m);
-                    Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() => DoUIChange()));
+                    rPid = serialPort.getNext();
+                    sum += rPid;
+                    pid = (UInt16)(rPid + 256);
+                    packetLen++;
+                }
+                if (rPid < 128)
+                {
+                    byte b = serialPort.getNext();
+                    sum += b;
+                    value = b;
+                    packetLen++;
+                }
+                else if (rPid < 192)
+                {
+                    byte b = serialPort.getNext();
+                    sum += b;
+                    byte c = serialPort.getNext();
+                    sum += c;
+                    value = (UInt16)(b + (256 * c));
+                    packetLen += 2;
+                }
+                else if (rPid < 254)
+                {
+                    byte len = serialPort.getNext();
+                    sum += len;
+                    byte[] buf = new byte[len];
+                    value = buf;
+                    for (int i = 0; i < len; i++)
+                    {
+                        buf[i] = serialPort.getNext();
+                        sum += buf[i];
+                    }
+                    packetLen += len;
+                }
+                else // 254, 510, 511
+                    outOfWhack = true;
+                if (packetLen > 21)
+                    outOfWhack = true;
+                if (!outOfWhack)
+                {
+                    Msg m = new Msg(MID, pid, value);
+                    if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
+                    {
+                        msgs[m.Code] = DateTime.Now;
+                        lock (queue) queue.Enqueue(m);
+                        Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() => DoUIChange()));
+                    }
                 }
             }
         }
@@ -187,7 +250,7 @@ public partial class MainWindow : Window
                 //2 byte
                 case 168: gauges.volts = (Convert.ToDecimal(m.value) * .05M).ToString("F1"); break;
                 case 177: gauges.transTemp = Convert.ToInt16(m.value) / 4; break;
-                case 190: gauges.rpm = (int)m.value / 4; break;
+                case 190: gauges.rpm = Convert.ToInt32(m.value) / 4; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
                 default:
@@ -199,80 +262,14 @@ public partial class MainWindow : Window
 public class Msg
 {
     public byte mid;
-    private byte len, rPid;
     public UInt16 pid;
     public object value;
-    public byte[] rawData;
     public int cnt=1;
-    public int time;
-    public Msg()
+    public Msg(byte m, UInt16 p, object v)
     {
-    }
-    private void getBytes(byte[] data, byte rp)
-    {
-        int l = len+3;
-        if (pid > 255) l++;
-        rawData = new byte[l];
-        for (int i=0;i<l; i++)
-            rawData[i] = data[rp++];
-    }
-    public bool set(byte[] data, ref byte readPos, byte writePos, ref bool outOfWhack) // returns false if not enough data
-    {
-        byte rp = readPos;
-        byte remLen = (byte)(writePos - readPos);
-        if (remLen < 4)
-            return false;
-        mid = data[rp++];
-        rPid = data[rp++];
-        byte sum = (byte)(mid + rPid);
-        pid = (UInt16)rPid;
-        if (mid < 100)
-            mid = mid;
-        if (rPid == 255)
-        {
-            remLen--;
-            if (remLen < 4)
-                return false;
-            pid += 256;
-            sum += data[rp++];
-        }
-        if (rPid < 128)
-        {
-            len = 1;
-            value = data[rp];
-            sum += data[rp++];
-        } else if (rPid < 192)
-        {
-            if (remLen < 6)
-                return false;
-            len = 2;
-            value = (UInt16)data[rp] + 256 * data[(byte)(rp + 1)];
-            sum += data[rp++];
-            sum += data[rp++];
-        } else if (rPid < 254)
-        {
-            len = data[rp];
-            sum += data[rp++];
-            if (remLen < (len + 4))
-                return false;
-            byte[] buf = new byte[len];
-            value = buf;
-            for (int i = 0; i < len; i++)
-            {
-                buf[i] = data[rp];
-                sum += data[rp++];
-            }
-        }
-        else // 254, 510, 511
-        {
-            outOfWhack = true;
-            return true;
-        }
-        sum += data[rp++];
-        getBytes(data, readPos);
-        readPos = rp;
-        outOfWhack = sum != 0;
-        return true;
+        mid = m;
+        pid = p;
+        value = v;
     }
     public override bool Equals(object obj)
     {
@@ -288,9 +285,7 @@ public class Msg
         if (pid > other.pid) return false;
         return true;
     }
-    public string Cnt => cnt.ToString();
-    public string Code => string.Format("{0} {1}:{2}", mid, pid, len);
-    public string Time => time.ToString();
+    public string Code => string.Format("{0} {1}", mid, pid);
     public string MID
     {
         get
@@ -303,12 +298,12 @@ public class Msg
     {
         get
         {
-            if (IDMaps.PIDs.ContainsKey(pid)) return IDMaps.PIDs[rPid];
+            if (IDMaps.PIDs.ContainsKey(pid)) return IDMaps.PIDs[(byte)pid];
             return pid.ToString();
         }
     }
     public static string Str(byte[] a) => String.Join(',', a);
-    public string RawData => Str(rawData);
+    public string Cnt => cnt.ToString();
     public string Data
     {
         get
@@ -504,7 +499,6 @@ public class Dat
     private bool saved = false, go = false;
     private string fileName;
     private FileStream fs = null;
-    public int lastTime;
     public bool sim = false, capt = false, pause = false;
     public Dat(int size = 0, string fn = "")
     {
@@ -548,7 +542,6 @@ public class Dat
             count = buf.Length - cur;
         System.Buffer.BlockCopy(buf, cur, outbuf, offset, count);
         int mils = ms[cur] - (int)((DateTime.Now - st).TotalMilliseconds);
-        lastTime = ms[cur];
         cur += count;
         if (mils > 0)
             Thread.Sleep(mils);
@@ -608,61 +601,61 @@ public class Dat
             len = 0;
             data = null;
             mid = buf[i++];
-            rPid = buf[i++];
-            byte sum = (byte)(mid + rPid);
-            pid = (UInt16)rPid;
-            if (rPid == 255)
+            w.Write(string.Format("{0}: {1}", ms[pos].ToString("D6"),IDMaps.MIDs[buf[pos]]));
+            byte sum = mid;
+            while (true)
             {
-                pid += 256;
-                sum += buf[i++];
-            }
-            if (rPid < 128)
-            {
-                len = 1;
-                value = buf[i];
-                sum += buf[i++];
-            }
-            else if (rPid < 192)
-            {
-                len = 2;
-                value = (UInt16)buf[i] + 256 * buf[(byte)(i + 1)];
-                sum += buf[i++];
-                sum += buf[i++];
-            }
-            else if (rPid < 254)
-            {
-                len = buf[i];
-                if (len > 20)
+                w.Write(string.Format("\t{0}: ", IDMaps.PIDs[buf[i]]));
+                rPid = buf[i++];
+                sum += rPid;
+                if (sum == 0)
+                    break;
+                pid = (UInt16)rPid;
+                if (rPid == 255)
                 {
-                    pos++;
-                    continue;
-                }
-                data = new byte[len];
-                sum += buf[i++];
-                value = data;
-                for (int j = 0; j < len; j++)
-                {
-                    data[j] = buf[i];
+                    pid += 256;
                     sum += buf[i++];
                 }
+                if (rPid < 128)
+                {
+                    len = 1;
+                    value = buf[i];
+                    w.WriteLine(buf[i]);
+                    sum += buf[i++];
+                }
+                else if (rPid < 192)
+                {
+                    len = 2;
+                    value = (UInt16)buf[i] + 256 * buf[(byte)(i + 1)];
+                    w.WriteLine(value);
+                    sum += buf[i++];
+                    sum += buf[i++];
+                }
+                else if (rPid < 254)
+                {
+                    len = buf[i];
+                    if (len > 20)
+                    {
+                        pos++;
+                        continue;
+                    }
+                    data = new byte[len];
+                    sum += buf[i++];
+                    value = data;
+                    for (int j = 0; j < len; j++)
+                    {
+                        data[j] = buf[i];
+                        w.Write("{0}, ", buf[i]);
+                        sum += buf[i++];
+                    }
+                    w.WriteLine();
+                }
+                else // 254, 510, 511
+                {
+                    w.WriteLine("WTF");
+                }
             }
-            else // 254, 510, 511
-            {
-            }
-            sum += buf[i++];
-            if (sum == 0)
-            {
-                if (oo) w.WriteLine();
-                w.Write(string.Format("{0}: {1} {2}:", ms[pos].ToString("D6"), buf[pos], buf[pos+1]));
-                for (int j = pos+2; j < i; j++)
-                    w.Write(string.Format("{0},", buf[j]));
-                if (data != null && len > 4)
-                    for (int j = pos + 3; j < i; j++)
-                        w.Write(string.Format("{0} ", Convert.ToString(buf[j], 2).PadLeft(8, '0')));
-                w.WriteLine();
-                pos = i;
-            }
-            else pos++;
+            pos = i;
             oo = sum != 0;
         }
         w.Close();

@@ -31,7 +31,7 @@
                  ItemsSource="{Binding MsgList}" HorizontalAlignment="Center" Canvas.Left="3" Canvas.Top="3" VerticalAlignment="Top">
       <ListView.View>
         <GridView x:Name="grdNames">
-          <GridViewColumn Header="###" DisplayMemberBinding="{Binding Time}"/>
+          <GridViewColumn Header="###" DisplayMemberBinding="{Binding Cnt}"/>
           <GridViewColumn Header="Code__________" DisplayMemberBinding="{Binding Code}"/>
           <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
           <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>
