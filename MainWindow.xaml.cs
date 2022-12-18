@@ -98,10 +98,10 @@ public class SerRead
 public partial class MainWindow : Window
 {
     protected Gauges gauges = new();
-    public ObservableCollection<Msg> MsgList = new();
     private Queue<Msg> queue = new Queue<Msg>();
     public static int OOWCnt = 0;
     private bool done = false;
+    private MsgListWindow mlw;
     public MainWindow()
     {
         InitializeComponent();
@@ -109,15 +109,15 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
         Thread tECU = new Thread(readLoop);
         Thread tVDC = new Thread(readLoop);
-
-		tECU.Start(new SerRead(6,0,@"c:\users\hp\Downloads\bin.dat"));
-	    //tVDC.Start(new SerRead(6));
+		mlw = new MsgListWindow();
+        mlw.Show();
+		tECU.Start(new SerRead(5,0,@"c:\users\john\Downloads\binE.dat"));
+	    tVDC.Start(new SerRead(6));
     }
     void Window_Loaded(object sender, RoutedEventArgs e)
     {
         //Set the current value of the gauges
         this.DataContext = gauges;
-        this.lstCodes.ItemsSource = MsgList;
     }
     void Window_Closed(object sender, System.EventArgs e)
     {
@@ -142,6 +142,7 @@ public partial class MainWindow : Window
             byte sum = MID;
             object value = 0;
             int packetLen = 0;
+            List<Msg> toSend = new List<Msg>();
 
             while (!outOfWhack)
             {
@@ -191,9 +192,12 @@ public partial class MainWindow : Window
                     outOfWhack = true;
                 if (packetLen > 21)
                     outOfWhack = true;
-                if (!outOfWhack)
+				toSend.Add(new Msg(MID, pid, value));
+            }
+            if (!outOfWhack)
+                foreach (Msg m in toSend)
                 {
-                    Msg m = new Msg(MID, pid, value);
+                    if (m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
                         msgs[m.Code] = DateTime.Now;
@@ -201,10 +205,13 @@ public partial class MainWindow : Window
                         Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() => DoUIChange()));
                     }
                 }
-            }
-        }
-    }
-    public void DoUIChange()
+		}
+	}
+    private static HashSet<int> InstPIDs =>
+        new HashSet<int>()
+            { 84,96,100,102,110,117,118,168,177,190,245 };
+    private static string[] ILStr = { "Off", "On", "Err", "NA" };
+	public void DoUIChange()
     {
         while (true)
         {
@@ -215,32 +222,11 @@ public partial class MainWindow : Window
                     return;
                 m = queue.Dequeue();
             }
-            var i = MsgList.IndexOf(m);
-            if (true)
-            {
-                if (i >= 0)
-                {
-                    m.cnt = MsgList[i].cnt + 1;
-                    MsgList.RemoveAt(i);
-                    MsgList.Insert(i, m);
-                }
-                else
-                {
-                    for (i = 0; i < MsgList.Count && MsgList[i].LessThan(m); i++) ;
-                    MsgList.Insert(i, m);
-                }
-            }
-            else if (m.pid == 226)
-                MsgList.Add(m);
             gauges.errs = OOWCnt;
             switch (m.pid)
             {
-                case 8: break; // air under warning 
-                case 45: break; // inlet air status
-                case 76: break; // axle 1 lift air
+                case 44: int val = Convert.ToInt32(m.value); gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
                 case 84: gauges.speed = Convert.ToInt32(m.value) / 2; break;
-                case 85: break; // cruise on/off bit 8
-                case 86: break; // cruise speed /2
                 case 96: gauges.fuel = Convert.ToInt32(m.value) / 2; break;
                 case 100: gauges.oil = Convert.ToInt32(m.value) / 2; break;
                 case 102: gauges.boost = Convert.ToInt32(m.value) / 8; break;
@@ -254,7 +240,8 @@ public partial class MainWindow : Window
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
                 default:
-                    break;
+                    mlw.AddToList(m);
+					break;
             }
         }
     }
@@ -356,7 +343,19 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _volts, value, "volts");
         }
     }
-    private int _speed;
+    private string _idiotlight;
+    public string idiotlight
+	{
+		get
+		{
+			return _idiotlight;
+		}
+		set
+		{
+			SetField(ref _idiotlight, value, "idiotlight");
+		}
+	}
+	private int _speed;
     public int speed
     {
         get
@@ -574,90 +573,6 @@ public class Dat
         fs.Write(bytes, 0, bytes.Length);
         fs.Close();
         saved = true;
-		Interpret();
 	    return;
-    }
-    public void Interpret()
-    {
-
-        StreamWriter w = new StreamWriter(Path.ChangeExtension(fileName,"txt"));
-        bool oo = false;
-        int pos;
-        for (pos = 0; pos < buf.Length - 30;)
-        {
-            byte mid, rPid;
-            byte b = buf[pos];
-            int i = pos;
-            int len;
-            object value;
-            byte[] data;
-            UInt16 pid;
-            if (b < 128 && oo && pos < (buf.Length - 20))
-            {
-                w.Write(b.ToString() + ",");
-                pos++;
-                continue;
-            }
-            len = 0;
-            data = null;
-            mid = buf[i++];
-            w.Write(string.Format("{0}: {1}", ms[pos].ToString("D6"),IDMaps.MIDs[buf[pos]]));
-            byte sum = mid;
-            while (true)
-            {
-                w.Write(string.Format("\t{0}: ", IDMaps.PIDs[buf[i]]));
-                rPid = buf[i++];
-                sum += rPid;
-                if (sum == 0)
-                    break;
-                pid = (UInt16)rPid;
-                if (rPid == 255)
-                {
-                    pid += 256;
-                    sum += buf[i++];
-                }
-                if (rPid < 128)
-                {
-                    len = 1;
-                    value = buf[i];
-                    w.WriteLine(buf[i]);
-                    sum += buf[i++];
-                }
-                else if (rPid < 192)
-                {
-                    len = 2;
-                    value = (UInt16)buf[i] + 256 * buf[(byte)(i + 1)];
-                    w.WriteLine(value);
-                    sum += buf[i++];
-                    sum += buf[i++];
-                }
-                else if (rPid < 254)
-                {
-                    len = buf[i];
-                    if (len > 20)
-                    {
-                        pos++;
-                        continue;
-                    }
-                    data = new byte[len];
-                    sum += buf[i++];
-                    value = data;
-                    for (int j = 0; j < len; j++)
-                    {
-                        data[j] = buf[i];
-                        w.Write("{0}, ", buf[i]);
-                        sum += buf[i++];
-                    }
-                    w.WriteLine();
-                }
-                else // 254, 510, 511
-                {
-                    w.WriteLine("WTF");
-                }
-            }
-            pos = i;
-            oo = sum != 0;
-        }
-        w.Close();
     }
 }

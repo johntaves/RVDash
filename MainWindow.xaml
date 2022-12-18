@@ -27,19 +27,6 @@
     </Border>
     <TextBlock Text="{Binding errs}" x:Name="Errs" Width="200" Canvas.Left="600" Canvas.Top="0" 
           TextAlignment="Right"    FontSize="40" Foreground="LightGray" FontFamily="Arial" />
-    <ListView Grid.Row="0" Name="lstCodes" Height="502" Width="500"
-                 ItemsSource="{Binding MsgList}" HorizontalAlignment="Center" Canvas.Left="3" Canvas.Top="3" VerticalAlignment="Top">
-      <ListView.View>
-        <GridView x:Name="grdNames">
-          <GridViewColumn Header="###" DisplayMemberBinding="{Binding Cnt}"/>
-          <GridViewColumn Header="Code__________" DisplayMemberBinding="{Binding Code}"/>
-          <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
-          <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>
-          <GridViewColumn Header="PID__________________________________" DisplayMemberBinding="{Binding PID}"/>
-          <GridViewColumn Header="RawData________________________________________" DisplayMemberBinding="{Binding RawData}"/>
-        </GridView>
-      </ListView.View>
-    </ListView>
     <Border BorderThickness="10" Canvas.Left="156" Canvas.Top="510" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
@@ -297,6 +284,7 @@
 
 
     </local:CircularGaugeControl>
+    <Label Content="Volts:" Canvas.Left="55" Canvas.Top="543" FontSize="40"/>
 
   </Canvas>
 </Window>
