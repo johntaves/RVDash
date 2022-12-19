@@ -15,7 +15,6 @@
         <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
         <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>
         <GridViewColumn Header="PID__________________________________" DisplayMemberBinding="{Binding PID}"/>
-        <GridViewColumn Header="RawData________________________________________" DisplayMemberBinding="{Binding RawData}"/>
       </GridView>
     </ListView.View>
   </ListView>

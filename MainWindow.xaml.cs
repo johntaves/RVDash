@@ -38,9 +38,9 @@ public partial class MainWindow : Window
             }
         }
 
-		tECU.Start(new SerRead(5));
-		tVDC.Start(new SerRead(6));
-		//tECU.Start(new SerRead(5, 0, "binE1.dat"));
+		//tECU.Start(new SerRead(5));
+		//tVDC.Start(new SerRead(6));
+		tECU.Start(new SerRead(5, 0, "binE.dat"));
 		//tVDC.Start(new SerRead(6, 0, "binV1.dat"));
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
@@ -128,7 +128,7 @@ public partial class MainWindow : Window
             if (!outOfWhack)
                 foreach (Msg m in toSend)
                 {
-                    if (m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
+                    if (false && m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
                     if (RemPIDs.Contains(m.pid)) continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {

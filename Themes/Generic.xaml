@@ -55,7 +55,7 @@ DAMAGE.-->
         <Setter Property="OptimalRangeColor" Value="Green" />
         <Setter Property="AboveOptimalRangeColor" Value="Red" />
         <Setter Property="DialTextColor" Value="White" />
-        <Setter Property="DialTextFontSize" Value="8" />
+        <Setter Property="DialTextFontSize" Value="16" />
 
         <Setter Property="Template" >
             <Setter.Value>
