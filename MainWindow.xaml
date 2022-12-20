@@ -68,7 +68,7 @@
       </Border.BorderBrush>
       <TextBlock Text="{Binding avgfuel}" Width="140" FontSize="100" />
     </Border>
-    <Border BorderThickness="10" Canvas.Left="443" Canvas.Top="259" Background="DarkGray">
+    <Border BorderThickness="10" Canvas.Left="443" Canvas.Top="259" Background="DarkGray" Visibility="{Binding cruise}">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
@@ -225,18 +225,19 @@
                                         />
 
     <local:CircularGaugeControl Canvas.Left="1518" Canvas.Top="654"
-                                        Radius="150" 
-                                        ScaleRadius="120" 
-                                        PointerLength="110" 
+                                        Radius="100" 
+                                        ScaleRadius="60" 
+                                        PointerLength="50" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="100"
+                                        ScaleLabelRadius="70"
                                         ScaleLabelSize="40,30"
-                                        ScaleLabelFontSize="18"
+                                        ScaleLabelFontSize="10"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
                                         MinValue="0" 
                                         MaxValue="150" 
-                                        MajorDivisionsCount="10" 
+                                        MajorDivisionsCount="5" 
+                                        MinorDivisionsCount="3"
                                         CurrentValue="{Binding boost}"
                                         ScaleLabelForeground="LightGray"
                                         MajorTickSize="10,3"
@@ -252,17 +253,17 @@
                                         DialTextColor="Black"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1581" Canvas.Top="10"
+    <local:CircularGaugeControl Canvas.Left="1578" Canvas.Top="70"
                                         Radius="120" 
-                                        ScaleRadius="90" 
-                                        PointerLength="80" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="80"
+                                        ScaleLabelRadius="85"
                                         ScaleLabelSize="40,30"
-                                        ScaleLabelFontSize="18"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
-                                        MinValue="0" 
+                                        MinValue="50" 
                                         MaxValue="150" 
                                         MajorDivisionsCount="10" 
                                         CurrentValue="{Binding airPrim}"
@@ -281,16 +282,16 @@
                                         />
 
     <local:CircularGaugeControl Canvas.Left="1581" Canvas.Top="331"
-                                        Radius="150" 
-                                        ScaleRadius="120" 
-                                        PointerLength="110" 
+                                        Radius="120" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="100"
+                                        ScaleLabelRadius="85"
                                         ScaleLabelSize="40,30"
-                                        ScaleLabelFontSize="18"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
-                                        MinValue="0" 
+                                        MinValue="50" 
                                         MaxValue="150" 
                                         MajorDivisionsCount="10" 
                                         CurrentValue="{Binding airSec}"
@@ -309,14 +310,14 @@
                                         />
 
     <!--DarkSlateGray gauge-->
-    <local:CircularGaugeControl Canvas.Left="918" Canvas.Top="171"
-                                        Radius="200" 
-                                        ScaleRadius="160" 
+    <local:CircularGaugeControl Canvas.Left="972" Canvas.Top="119"
+                                        Radius="250" 
+                                        ScaleRadius="210" 
                                         ScaleStartAngle="120" 
-                                        ScaleLabelRadius="110"
+                                        ScaleLabelRadius="170"
                                         ResetPointerOnStartUp="True"
                                         ScaleSweepAngle="300"
-                                        PointerLength="150" 
+                                        PointerLength="200" 
                                         PointerCapRadius="35" 
                                         MinValue="0" 
                                         MaxValue="35" 
@@ -324,7 +325,7 @@
                                         MinorDivisionsCount="5" 
                                         CurrentValue="{Binding rpm}"
                                         ScaleLabelSize="80,40"
-                                        ScaleLabelFontSize="22"
+                                        ScaleLabelFontSize="26"
                                         ScaleLabelForeground="White"
                                         MajorTickSize="30,3"
                                         MinorTickSize="9,1"
@@ -342,10 +343,9 @@
     </local:CircularGaugeControl>
     <Label Content="Volts:" Canvas.Left="30" Canvas.Top="194" FontSize="40"/>
     <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
-    <Ellipse Height="33" Width="50" Stroke="gray" StrokeThickness="5" Fill="{Binding high}" Canvas.Left="935" Canvas.Top="63"/>
-    <Polygon Points="0,50 50,0 50,25 100,25 100,75 50,75 50,100" Stroke="gray" StrokeThickness="5" Fill="{Binding leftturn}" Canvas.Left="450" Canvas.Top="460" />
-    <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Stroke="gray" StrokeThickness="5" Fill="{Binding rightturn}" Canvas.Left="1420" Canvas.Top="460" />
-    <TextBlock FontSize="30" Background="{Binding cruise}" Canvas.Left="1070" Text="Cruise" Canvas.Top="594"/>
+    <Ellipse Height="33" Width="50" Stroke="gray" StrokeThickness="5" Fill="{Binding high}" Canvas.Left="935" Canvas.Top="100"/>
+    <Polygon Points="0,50 50,0 50,25 100,25 100,75 50,75 50,100" Stroke="gray" StrokeThickness="5" Fill="{Binding leftturn}" Canvas.Left="420" Canvas.Top="520" />
+    <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Stroke="gray" StrokeThickness="5" Fill="{Binding rightturn}" Canvas.Left="1450" Canvas.Top="520" />
     <TextBlock FontSize="30" Background="{Binding lowair}" Canvas.Left="950" Text="Low&#10;Air" Canvas.Top="590"/>
     <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590"/>
     <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594"/>

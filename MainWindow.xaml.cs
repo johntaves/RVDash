@@ -18,7 +18,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
-    private SerRead capt1, capt2;
+    private SerRead capt1 = null, capt2 = null;
     public MainWindow()
     {
         InitializeComponent();
@@ -46,9 +46,9 @@ public partial class MainWindow : Window
 
 		//tECU.Start(new SerRead(5));
 		//tVDC.Start(new SerRead(6));
-		tECU.Start(capt1 = new SerRead(7, 10000, "binE2.dat"));
-		tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
-        tADC.Start(8);
+		tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
+		//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
+        //tADC.Start(8);
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -194,8 +194,10 @@ public partial class MainWindow : Window
                     bVal = Convert.ToBoolean(m.value);
             }
             catch (Exception e) { }
-            gauges.captpos1 = capt1.CaptPos();
-            gauges.captpos2 = capt2.CaptPos();
+            if (capt1 != null)
+                gauges.captpos1 = capt1.CaptPos();
+            if (capt2 != null)
+                gauges.captpos2 = capt2.CaptPos();
             mlw.AddToList(m);
             switch (m.pid)
             {
@@ -204,7 +206,7 @@ public partial class MainWindow : Window
                 case 47: gauges.retarder = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
                 // case 70: gauges.brake = (val & 0x80) > 0 ? "Red" : "DarkGray"; break;
                 case 84: gauges.speed = val / 2; break;
-                case 85: gauges.cruise = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
+                case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
                 case 96: gauges.fuel = val / 2; break;
                 case 100: gauges.oil = val / 2; break;
