@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
+    private SerRead capt1, capt2;
     public MainWindow()
     {
         InitializeComponent();
@@ -25,23 +26,29 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
         Thread tECU = new Thread(readLoop);
         Thread tVDC = new Thread(readLoop);
+        Thread tADC = new Thread(readADC);
 		mlw = new MsgListWindow();
         mlw.Show();
-        foreach (Screen s in System.Windows.Forms.Screen.AllScreens)
+        if (Screen.AllScreens.Length > 1)
         {
-            if (false && !s.Primary)
+            foreach (Screen s in Screen.AllScreens)
             {
-                this.Left = s.Bounds.Left;
-                this.Top = s.Bounds.Top;
-               // this.WindowState = WindowState.Maximized;
-                break;
+                if (!s.Primary)
+                {
+					var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
+									Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
+					this.Left = s.WorkingArea.Left / scaleRatio;
+					this.Top = s.WorkingArea.Top / scaleRatio;
+					break;
+                }
             }
-        }
+		}
 
 		//tECU.Start(new SerRead(5));
 		//tVDC.Start(new SerRead(6));
-		tECU.Start(new SerRead(5, 0, "binE.dat"));
-		//tVDC.Start(new SerRead(6, 0, "binV1.dat"));
+		tECU.Start(capt1 = new SerRead(7, 10000, "binE2.dat"));
+		tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
+        tADC.Start(8);
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -51,6 +58,24 @@ public partial class MainWindow : Window
     void Window_Closed(object sender, System.EventArgs e)
     {
         done = true;
+    }
+    private void readADC(object port)
+    {
+        SerialPort sp = new SerialPort();
+        sp.BaudRate = 115200;
+        sp.PortName = string.Format("COM{0}",port);
+        sp.Open();
+        while (!done)
+        {
+            string line = sp.ReadLine();
+            if (line.Length < 10) continue;
+            int ch = int.Parse(line.Substring(2, 1));
+            if (ch > 4) continue;
+            int val = int.Parse(line.Substring(4, 4));
+            Msg m = new Msg(140, (UInt16)(500+ch), val > 400);
+			lock (queue) queue.Enqueue(m);
+			Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
+		}
     }
     private void readLoop(object sr)
     {
@@ -134,7 +159,7 @@ public partial class MainWindow : Window
                     {
                         msgs[m.Code] = DateTime.Now;
                         lock (queue) queue.Enqueue(m);
-                        Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() => DoUIChange()));
+                        Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
                     }
                 }
 		}
@@ -159,12 +184,18 @@ public partial class MainWindow : Window
             }
             gauges.errs = OOWCnt;
             int val = 0;
+            bool bVal = false;
             try
             {
-                if (m.value.GetType() == typeof(byte) || m.value.GetType() == typeof(UInt16))
+                Type t = m.value.GetType();
+                if (t == typeof(byte) || t == typeof(UInt16))
                     val = Convert.ToInt32(m.value);
+                if (t == typeof(bool))
+                    bVal = Convert.ToBoolean(m.value);
             }
             catch (Exception e) { }
+            gauges.captpos1 = capt1.CaptPos();
+            gauges.captpos2 = capt2.CaptPos();
             mlw.AddToList(m);
             switch (m.pid)
             {
@@ -192,7 +223,12 @@ public partial class MainWindow : Window
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-                default:
+				case 500: gauges.lowfuel = bVal ? "Green" : "DarkGray"; break;
+				case 501: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
+				case 502: gauges.leftturn = bVal ? "Green" : "DarkGray"; break;
+				case 503: gauges.high = bVal ? "Green" : "DarkGray"; break;
+				case 504: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
+				default:
                   //  mlw.AddToList(m);
 					break;
             }
@@ -219,6 +255,8 @@ public class SerRead
             sp.Open();
         }
     }
+    public int CaptPos() => d.CaptPos();
+    
     public void pause()
     {
         d.pause = true;
@@ -391,19 +429,43 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _idiotlight, value, "idiotlight");
 		}
 	}
-    private int _speed;
-    public int speed
-    {
-        get
-        {
-            return _speed;
-        }
-        set
-        {
-            SetField(ref _speed, value, "speed");
-        }
-    }
-    private int _setspeed;
+	private int _captpos1;
+	public int captpos1
+	{
+		get
+		{
+			return _captpos1;
+		}
+		set
+		{
+			SetField(ref _captpos1, value, "captpos1");
+		}
+	}
+	private int _captpos2;
+	public int captpos2
+	{
+		get
+		{
+			return _captpos2;
+		}
+		set
+		{
+			SetField(ref _captpos2, value, "captpos2");
+		}
+	}
+	private int _speed;
+	public int speed
+	{
+		get
+		{
+			return _speed;
+		}
+		set
+		{
+			SetField(ref _speed, value, "speed");
+		}
+	}
+	private int _setspeed;
     public int setspeed
     {
         get
@@ -619,19 +681,43 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _cruise, value, "cruise");
         }
     }
-    private string _leftturn;
-    public string leftturn
-    {
-        get
-        {
-            return _leftturn;
-        }
-        set
-        {
-            SetField(ref _leftturn, value, "leftturn");
-        }
-    }
-    private string _rightturn;
+	private string _leftturn;
+	public string leftturn
+	{
+		get
+		{
+			return _leftturn;
+		}
+		set
+		{
+			SetField(ref _leftturn, value, "leftturn");
+		}
+	}
+	private string _high;
+	public string high
+	{
+		get
+		{
+			return _high;
+		}
+		set
+		{
+			SetField(ref _high, value, "high");
+		}
+	}
+	private string _lowfuel;
+	public string lowfuel
+	{
+		get
+		{
+			return _lowfuel;
+		}
+		set
+		{
+			SetField(ref _lowfuel, value, "lowfuel");
+		}
+	}
+	private string _rightturn;
     public string rightturn
     {
         get
@@ -766,6 +852,7 @@ public class Dat
 			load();
 		}
 	}
+    public int CaptPos() => cur;
     public void add(byte b)
     {
         if (cur == 0)
