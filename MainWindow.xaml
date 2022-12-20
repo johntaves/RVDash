@@ -68,7 +68,7 @@
       </Border.BorderBrush>
       <TextBlock Text="{Binding avgfuel}" Width="140" FontSize="100" />
     </Border>
-    <Border BorderThickness="10" Canvas.Left="441" Canvas.Top="304" Background="DarkGray">
+    <Border BorderThickness="10" Canvas.Left="443" Canvas.Top="259" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
@@ -222,7 +222,7 @@
                                         DialTextColor="Black"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1468" Canvas.Top="670"
+    <local:CircularGaugeControl Canvas.Left="1518" Canvas.Top="654"
                                         Radius="150" 
                                         ScaleRadius="120" 
                                         PointerLength="110" 
@@ -250,12 +250,12 @@
                                         DialTextColor="Black"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1350" Canvas.Top="63"
-                                        Radius="150" 
-                                        ScaleRadius="120" 
-                                        PointerLength="110" 
+    <local:CircularGaugeControl Canvas.Left="1581" Canvas.Top="10"
+                                        Radius="120" 
+                                        ScaleRadius="90" 
+                                        PointerLength="80" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="100"
+                                        ScaleLabelRadius="80"
                                         ScaleLabelSize="40,30"
                                         ScaleLabelFontSize="18"
                                         ScaleStartAngle="180" 
@@ -278,7 +278,7 @@
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1500" Canvas.Top="363"
+    <local:CircularGaugeControl Canvas.Left="1581" Canvas.Top="331"
                                         Radius="150" 
                                         ScaleRadius="120" 
                                         PointerLength="110" 
@@ -303,7 +303,7 @@
                                         OptimalRangeEndValue="700" 
                                         DialTextOffset="40" 
                                         DialText="Rear Air"
-                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        DialTextColor="Black" HorizontalAlignment="Center" VerticalAlignment="Top"
                                         />
 
     <!--DarkSlateGray gauge-->
@@ -340,15 +340,16 @@
     </local:CircularGaugeControl>
     <Label Content="Volts:" Canvas.Left="30" Canvas.Top="194" FontSize="40"/>
     <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
-    <TextBlock FontSize="30" Background="{Binding leftturn}" Canvas.Left="292" Text="Left" Canvas.Top="427" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-    <TextBlock FontSize="30" Background="{Binding rightturn}" Canvas.Left="1398" Text="Right" Canvas.Top="427"/>
+    <Ellipse Height="33" Width="50" Stroke="gray" StrokeThickness="5" Fill="{Binding high}" Canvas.Left="935" Canvas.Top="63"/>
+    <Polygon Points="0,50 50,0 50,25 100,25 100,75 50,75 50,100" Stroke="gray" StrokeThickness="5" Fill="{Binding leftturn}" Canvas.Left="450" Canvas.Top="460" />
+    <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Stroke="gray" StrokeThickness="5" Fill="{Binding rightturn}" Canvas.Left="1420" Canvas.Top="460" />
     <TextBlock FontSize="30" Background="{Binding cruise}" Canvas.Left="1070" Text="Cruise" Canvas.Top="594"/>
     <TextBlock FontSize="30" Background="{Binding lowair}" Canvas.Left="950" Text="Low&#10;Air" Canvas.Top="590"/>
     <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590" HorizontalAlignment="Center" VerticalAlignment="Top"/>
     <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594" HorizontalAlignment="Center" VerticalAlignment="Top"/>
     <TextBlock FontSize="30" Background="{Binding wait}" Canvas.Left="524" Text="Wait To&#10;Start" Canvas.Top="591"/>
-    <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="420" Text="Ret" Canvas.Top="532"/>
-    <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="420" Text="Ret" Canvas.Top="473"/>
+    <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="443" Text="Ret" Canvas.Top="160"/>
+    <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="443" Text="Ret" Canvas.Top="79"/>
     <StackPanel Orientation="Horizontal" Canvas.Top="0" Canvas.Left="30">
       <Label Content="Intake Temp" FontSize="50" />
       <TextBlock Text="{Binding inttemp}" FontSize="50" />
