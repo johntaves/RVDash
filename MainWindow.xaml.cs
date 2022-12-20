@@ -23,39 +23,54 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         this.Loaded += new RoutedEventHandler(Window_Loaded);
+        this.LocationChanged += Window_LocationChanged;
         this.Closed += Window_Closed;
         Thread tECU = new Thread(readLoop);
         Thread tVDC = new Thread(readLoop);
         Thread tADC = new Thread(readADC);
 		mlw = new MsgListWindow();
         mlw.Show();
-        if (Screen.AllScreens.Length > 1)
+        if (Environment.MachineName.Equals("dash", StringComparison.CurrentCultureIgnoreCase))
         {
-            foreach (Screen s in Screen.AllScreens)
-            {
-                if (!s.Primary)
-                {
-					var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
-									Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
-					this.Left = s.WorkingArea.Left / scaleRatio;
-					this.Top = s.WorkingArea.Top / scaleRatio;
-					break;
-                }
-            }
-		}
-
-		//tECU.Start(new SerRead(5));
-		//tVDC.Start(new SerRead(6));
-		tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
-		//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
-        //tADC.Start(8);
+            tECU.Start(new SerRead(7));
+            tVDC.Start(new SerRead(6));
+            tADC.Start(8);
+        }
+        else
+        {
+            tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
+            //tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
+        }
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
     {
         //Set the current value of the gauges
         this.DataContext = gauges;
     }
-    void Window_Closed(object sender, System.EventArgs e)
+    void Window_LocationChanged(object sender, System.EventArgs e)
+    {
+		if (Screen.AllScreens.Length > 1)
+		{
+			foreach (Screen s in Screen.AllScreens)
+			{
+				if (!s.Primary)
+				{
+					var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
+									Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
+					this.Left = s.WorkingArea.Left / scaleRatio;
+					this.Top = s.WorkingArea.Top / scaleRatio;
+                    this.WindowStyle = WindowStyle.None;
+                    //this.WindowState = WindowState.Maximized;
+					break;
+				}
+			}
+		} else
+        {
+			this.WindowStyle = WindowStyle.ThreeDBorderWindow;
+			this.WindowState = WindowState.Normal;
+		}
+	}
+	void Window_Closed(object sender, System.EventArgs e)
     {
         done = true;
     }
@@ -67,14 +82,17 @@ public partial class MainWindow : Window
         sp.Open();
         while (!done)
         {
-            string line = sp.ReadLine();
-            if (line.Length < 10) continue;
-            int ch = int.Parse(line.Substring(2, 1));
-            if (ch > 4) continue;
-            int val = int.Parse(line.Substring(4, 4));
-            Msg m = new Msg(140, (UInt16)(500+ch), val > 400);
-			lock (queue) queue.Enqueue(m);
-			Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
+            try
+            {
+                string line = sp.ReadLine();
+                if (line.Length < 10) continue;
+                int ch = int.Parse(line.Substring(2, 1));
+                if (ch > 4) continue;
+                int val = int.Parse(line.Substring(4, 4));
+                Msg m = new Msg(140, (UInt16)(500 + ch), val > 400);
+                lock (queue) queue.Enqueue(m);
+                Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
+            } catch (Exception e) { }
 		}
     }
     private void readLoop(object sr)
@@ -225,10 +243,10 @@ public partial class MainWindow : Window
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-				case 500: gauges.lowfuel = bVal ? "Green" : "DarkGray"; break;
+				case 500: gauges.lowfuel = bVal ? "Yellow" : "Green"; break;
 				case 501: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
 				case 502: gauges.leftturn = bVal ? "Green" : "DarkGray"; break;
-				case 503: gauges.high = bVal ? "Green" : "DarkGray"; break;
+				case 503: gauges.high = bVal ? "Blue" : "DarkGray"; break;
 				case 504: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
 				default:
                   //  mlw.AddToList(m);
