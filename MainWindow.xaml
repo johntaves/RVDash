@@ -59,7 +59,7 @@
       </Border.BorderBrush>
       <TextBlock Text="{Binding instfuel}" Width="140" FontSize="100" />
     </Border>
-    <Border BorderThickness="10" Canvas.Left="55" Canvas.Top="473" Background="DarkGray" HorizontalAlignment="Left" VerticalAlignment="Top">
+    <Border BorderThickness="10" Canvas.Left="55" Canvas.Top="473" Background="DarkGray">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,0.9" StartPoint="0.5,0">
           <GradientStop Color="#FFEBEFFA" Offset="0.5"/>
@@ -78,6 +78,8 @@
       <TextBlock Text="{Binding setspeed}" Width="140" 
               FontSize="100" />
     </Border>
+    <TextBlock Text="{Binding captpos1}" Foreground="black" Width="200" Canvas.Left="0" Canvas.Top="70" FontSize="40" />
+    <TextBlock Text="{Binding captpos2}" Foreground="Black" Width="200" Canvas.Left="0" Canvas.Top="110" FontSize="40" />
     <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="600" Canvas.Top="0" FontSize="40" />
     <Border BorderThickness="10" Canvas.Left="131" Canvas.Top="161" Background="DarkGray">
       <Border.BorderBrush>
@@ -88,7 +90,7 @@
       </Border.BorderBrush>
       <TextBlock Text="{Binding volts}" Width="200" FontSize="80" />
     </Border>
-    <Border BorderThickness="10" Canvas.Left="655" Canvas.Top="518" HorizontalAlignment="Left" VerticalAlignment="Top">
+    <Border BorderThickness="10" Canvas.Left="655" Canvas.Top="518">
       <Border.BorderBrush>
         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
           <GradientStop Color="#FFA3AFD6" Offset="0.321"/>
@@ -340,12 +342,14 @@
     </local:CircularGaugeControl>
     <Label Content="Volts:" Canvas.Left="30" Canvas.Top="194" FontSize="40"/>
     <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
-    <TextBlock FontSize="30" Background="{Binding leftturn}" Canvas.Left="292" Text="Left" Canvas.Top="427" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+    <TextBlock FontSize="30" Background="{Binding lowfuel}" Canvas.Left="1289" Text="Fuel" Canvas.Top="601"/>
+    <TextBlock FontSize="30" Background="{Binding high}" Canvas.Left="938" Text="High&#10;Beam" Canvas.Top="85"/>
+    <TextBlock FontSize="30" Background="{Binding leftturn}" Canvas.Left="292" Text="Left" Canvas.Top="427"/>
     <TextBlock FontSize="30" Background="{Binding rightturn}" Canvas.Left="1398" Text="Right" Canvas.Top="427"/>
     <TextBlock FontSize="30" Background="{Binding cruise}" Canvas.Left="1070" Text="Cruise" Canvas.Top="594"/>
     <TextBlock FontSize="30" Background="{Binding lowair}" Canvas.Left="950" Text="Low&#10;Air" Canvas.Top="590"/>
-    <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-    <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+    <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590"/>
+    <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594"/>
     <TextBlock FontSize="30" Background="{Binding wait}" Canvas.Left="524" Text="Wait To&#10;Start" Canvas.Top="591"/>
     <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="420" Text="Ret" Canvas.Top="532"/>
     <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="420" Text="Ret" Canvas.Top="473"/>
