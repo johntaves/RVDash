@@ -23,31 +23,56 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         this.Loaded += new RoutedEventHandler(Window_Loaded);
-        this.LocationChanged += Window_LocationChanged;
+        this.MouseDoubleClick += Window_DBLClick;
         this.Closed += Window_Closed;
-        Thread tECU = new Thread(readLoop);
-        Thread tVDC = new Thread(readLoop);
-        Thread tADC = new Thread(readADC);
 		mlw = new MsgListWindow();
         mlw.Show();
-        if (Environment.MachineName.Equals("dash", StringComparison.CurrentCultureIgnoreCase))
-        {
-            tECU.Start(new SerRead(7));
-            tVDC.Start(new SerRead(6));
-            tADC.Start(8);
-        }
-        else
-        {
-            tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
-            //tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
-        }
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
-    {
-        //Set the current value of the gauges
-        this.DataContext = gauges;
-    }
-    void Window_LocationChanged(object sender, System.EventArgs e)
+	{
+		Thread tECU = new Thread(readLoop);
+		Thread tVDC = new Thread(readLoop);
+		Thread tADC = new Thread(readADC);
+		//Set the current value of the gauges
+		this.DataContext = gauges;
+        CheckScreen();
+		if (Environment.MachineName.Equals("dash", StringComparison.CurrentCultureIgnoreCase))
+		{
+			if (true)
+			{
+				tECU.Start(new SerRead(10));
+				tVDC.Start(new SerRead(6));
+			}
+			else if (false)
+			{
+				tECU.Start(capt1 = new SerRead(10, 70000, "binE.dat"));
+				tVDC.Start(capt2 = new SerRead(6, 70000, "binV.dat"));
+			}
+			else
+			{
+				tECU.Start(capt1 = new SerRead("binE.dat"));
+				tVDC.Start(capt2 = new SerRead("binV.dat"));
+			}
+			tADC.Start(8);
+		}
+		else
+		{
+			tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
+			//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
+		}
+        gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
+	}
+	void Window_DBLClick(object sender, RoutedEventArgs e)
+	{
+        if (this.WindowStyle == WindowStyle.None)
+        {
+			this.WindowStyle = WindowStyle.ThreeDBorderWindow;
+			this.WindowState = WindowState.Normal;
+		}
+		else
+            CheckScreen();
+	}
+	void CheckScreen()
     {
 		if (Screen.AllScreens.Length > 1)
 		{
@@ -60,7 +85,7 @@ public partial class MainWindow : Window
 					this.Left = s.WorkingArea.Left / scaleRatio;
 					this.Top = s.WorkingArea.Top / scaleRatio;
                     this.WindowStyle = WindowStyle.None;
-                    //this.WindowState = WindowState.Maximized;
+                    this.WindowState = WindowState.Maximized;
 					break;
 				}
 			}
@@ -73,6 +98,7 @@ public partial class MainWindow : Window
 	void Window_Closed(object sender, System.EventArgs e)
     {
         done = true;
+        mlw.Close();
     }
     private void readADC(object port)
     {
@@ -87,14 +113,14 @@ public partial class MainWindow : Window
                 string line = sp.ReadLine();
                 if (line.Length < 10) continue;
                 int ch = int.Parse(line.Substring(2, 1));
-                if (ch > 4) continue;
                 int val = int.Parse(line.Substring(4, 4));
                 Msg m = new Msg(140, (UInt16)(500 + ch), val > 400);
                 lock (queue) queue.Enqueue(m);
                 Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
-            } catch (Exception e) { }
-		}
-    }
+            }
+            catch { }
+        }
+	}
     private void readLoop(object sr)
     {
         SerRead serialPort = (SerRead)sr;
@@ -171,7 +197,7 @@ public partial class MainWindow : Window
             if (!outOfWhack)
                 foreach (Msg m in toSend)
                 {
-                    if (false && m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
+                    if (m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
                     if (RemPIDs.Contains(m.pid)) continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
@@ -203,20 +229,16 @@ public partial class MainWindow : Window
             gauges.errs = OOWCnt;
             int val = 0;
             bool bVal = false;
-            try
-            {
-                Type t = m.value.GetType();
-                if (t == typeof(byte) || t == typeof(UInt16))
-                    val = Convert.ToInt32(m.value);
-                if (t == typeof(bool))
-                    bVal = Convert.ToBoolean(m.value);
-            }
-            catch (Exception e) { }
+            Type t = m.value.GetType();
+            if (t == typeof(byte) || t == typeof(UInt16))
+                val = Convert.ToInt32(m.value);
+            if (t == typeof(bool))
+                bVal = Convert.ToBoolean(m.value);
             if (capt1 != null)
                 gauges.captpos1 = capt1.CaptPos();
             if (capt2 != null)
                 gauges.captpos2 = capt2.CaptPos();
-            mlw.AddToList(m);
+            //mlw.AddToList(m);
             switch (m.pid)
             {
                 case 44: gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
@@ -226,13 +248,13 @@ public partial class MainWindow : Window
                 case 84: gauges.speed = val / 2; break;
                 case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
-                case 96: gauges.fuel = val / 2; break;
-                case 100: gauges.oil = val / 2; break;
+                case 96: gauges.fuel = val / 2; gauges.lowfuel = val < 30 ? "Yellow" : "Black"; break;
+                case 100: gauges.oil = val / 2; gauges.lowoil = val < 20 ? "Yellow" : val < 10 ? "Red" : "Black"; break;
                 case 102: gauges.boost = val / 8; break;
-                case 105: gauges.inttemp = val; break;
-                case 110: gauges.water = val; break;
-                case 117: gauges.airPrim = val * 3 / 5; break;
-                case 118: gauges.airSec = val * 3 / 5; break;
+                case 105: gauges.inttemp = val; gauges.lowinttemp = val < 70 ? "cornflowerblue" : "Black"; break;
+                case 110: gauges.water = val; gauges.hotwater = val > 217 ? "Yellow" : val > 225 ? "Red": "Black"; break;
+                case 117: gauges.airPrim = val * 3 / 5; gauges.lowairprim = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
+                case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
@@ -243,13 +265,11 @@ public partial class MainWindow : Window
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-				case 500: gauges.lowfuel = bVal ? "Yellow" : "Green"; break;
-				case 501: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
-				case 502: gauges.leftturn = bVal ? "Green" : "DarkGray"; break;
-				case 503: gauges.high = bVal ? "Blue" : "DarkGray"; break;
-				case 504: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
+				case 505: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
+				case 506: gauges.leftturn = bVal ? "Green" : "DarkGray"; break;
+				case 507: gauges.high = bVal ? "Blue" : "DarkGray"; break;
 				default:
-                  //  mlw.AddToList(m);
+                    mlw.AddToList(m);
 					break;
             }
         }
@@ -261,21 +281,27 @@ public class SerRead
     private Dat d;
     byte readPos = 0, writePos = 0;
     byte[] data = new byte[256];
-    public SerRead(int port = 0, int size = 0, string fn = "")
+    public SerRead(int port)
+    {
+        OpenPort(port);
+    }
+    public SerRead(string fn)
+    {
+        d = new Dat(fn);
+    }
+    public SerRead(int port, int size, string fn)
     {
         d = new Dat(size, fn);
-        if (!d.sim)
-        {
-            sp = new SerialPort();
-            sp.PortName = string.Format("COM{0}", port);
-            sp.BaudRate = 9600;
-            sp.StopBits = StopBits.One;
-            sp.DataBits = 8;
-            sp.Parity = Parity.None;
-            sp.Open();
-        }
+        OpenPort(port);
     }
-    public int CaptPos() => d.CaptPos();
+    private void OpenPort(int port)
+    {
+        sp = new SerialPort();
+        sp.PortName = string.Format("COM{0}", port);
+        sp.BaudRate = 9600;
+        sp.Open();
+    }
+	public int CaptPos() => d.CaptPos();
     
     public void pause()
     {
@@ -304,11 +330,14 @@ public class SerRead
         }
         else amt = readPos - writePos - 1;
         if (amt > 25) amt = 25;
-        int len;
-        if (sp != null && !d.capt)
-            len = sp.Read(data, writePos, amt);
-        else if (sp != null)
-            len = ReadCapt(data, writePos, amt);
+        int len=0;
+        if (sp != null)
+        {
+            if (d == null)
+                len = sp.Read(data, writePos, amt);
+            else if (sp != null && d != null)
+                len = ReadCapt(data, writePos, amt);
+        }
         else
         {
             len = d.read(data, writePos, amt);
@@ -509,7 +538,19 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _oil, value, "oil");
         }
     }
-    private int _water;
+	private string _hotwater;
+	public string hotwater
+	{
+		get
+		{
+			return _hotwater;
+		}
+		set
+		{
+			SetField(ref _hotwater, value, "hotwater");
+		}
+	}
+	private int _water;
     public int water
     {
         get
@@ -689,18 +730,30 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _brake, value, "brake");
         }
     }
-    private string _cruise;
-    public string cruise
-    {
-        get
-        {
-            return _cruise;
-        }
-        set
-        {
-            SetField(ref _cruise, value, "cruise");
-        }
-    }
+	private string _showcapt;
+	public string showcapt
+	{
+		get
+		{
+			return _showcapt;
+		}
+		set
+		{
+			SetField(ref _showcapt, value, "showcapt");
+		}
+	}
+	private string _cruise;
+	public string cruise
+	{
+		get
+		{
+			return _cruise;
+		}
+		set
+		{
+			SetField(ref _cruise, value, "cruise");
+		}
+	}
 	private string _leftturn;
 	public string leftturn
 	{
@@ -737,6 +790,18 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowfuel, value, "lowfuel");
 		}
 	}
+	private string _lowinttemp;
+	public string lowinttemp
+	{
+		get
+		{
+			return _lowinttemp;
+		}
+		set
+		{
+			SetField(ref _lowinttemp, value, "lowinttemp");
+		}
+	}
 	private string _rightturn;
     public string rightturn
     {
@@ -749,19 +814,43 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _rightturn, value, "rightturn");
         }
     }
-    private string _lowair;
-    public string lowair
-    {
-        get
-        {
-            return _lowair;
-        }
-        set
-        {
-            SetField(ref _lowair, value, "lowair");
-        }
-    }
-    private string _lowwater;
+	private string _lowoil;
+	public string lowoil
+	{
+		get
+		{
+			return _lowoil;
+		}
+		set
+		{
+			SetField(ref _lowoil, value, "lowoil");
+		}
+	}
+	private string _lowairprim;
+	public string lowairprim
+	{
+		get
+		{
+			return _lowairprim;
+		}
+		set
+		{
+			SetField(ref _lowairprim, value, "lowairprim");
+		}
+	}
+	private string _lowairsec;
+	public string lowairsec
+	{
+		get
+		{
+			return _lowairsec;
+		}
+		set
+		{
+			SetField(ref _lowairsec, value, "lowairsec");
+		}
+	}
+	private string _lowwater;
     public string lowwater
     {
         get
@@ -856,21 +945,21 @@ public class Dat
     private bool saved = false, go = false;
     private string fileName;
     private FileStream fs = null;
-    public bool sim = false, capt = false, pause = false;
-    public Dat(int size = 0, string fn = "")
+    public bool pause = false;
+    private void setFn(string fn)
     {
-		fileName = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"),"Downloads",fn);
-		if (size > 0) {
-			buf = new byte[size];
-			ms = new int[size];
-			capt = true;
-			if (fn.Length == 0)
-                throw new Exception("Bullshit");
-		} else if (fn.Length > 0)
-        {
-            sim = true;
-			load();
-		}
+		fileName = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", fn);
+	}
+    public Dat(string fn)
+    {
+        setFn(fn);
+		load();
+	}
+	public Dat(int size, string fn)
+    {
+        setFn(fn);
+		buf = new byte[size];
+		ms = new int[size];
 	}
     public int CaptPos() => cur;
     public void add(byte b)
@@ -879,8 +968,11 @@ public class Dat
             st = DateTime.Now;
         if (cur == buf.Length)
         {
-            save();
-            return;
+            if (saved) return;
+			Thread s = new Thread(saver);
+			s.Start();
+			saved = true;
+			return;
         }
         buf[cur] = b;
         ms[cur++] = (int)(DateTime.Now - st).TotalMilliseconds;
@@ -899,7 +991,8 @@ public class Dat
         if (count > (buf.Length - cur))
             count = buf.Length - cur;
         System.Buffer.BlockCopy(buf, cur, outbuf, offset, count);
-        int mils = ms[cur] - (int)((DateTime.Now - st).TotalMilliseconds);
+        var diff = DateTime.Now - st;
+		int mils = ms[cur] - (int)(diff.TotalMilliseconds);
         cur += count;
         if (mils > 0)
             Thread.Sleep(mils);
@@ -921,17 +1014,14 @@ public class Dat
         fs.Close();
         System.Buffer.BlockCopy(bytes, 0, ms, 0, bytes.Length);
     }
-    public void save()
+    private void saver()
     {
-        if (saved) return;
-        FileStream fs = File.Open(fileName, FileMode.Create);
-        fs.Write(buf, 0, buf.Length);
-        byte[] bytes = new byte[buf.Length * sizeof(int)];
-        System.Buffer.BlockCopy(ms, 0, bytes, 0, bytes.Length);
+		FileStream fs = File.Open(fileName, FileMode.Create);
+		fs.Write(buf, 0, buf.Length);
+		byte[] bytes = new byte[buf.Length * sizeof(int)];
+		System.Buffer.BlockCopy(ms, 0, bytes, 0, bytes.Length);
 
-        fs.Write(bytes, 0, bytes.Length);
-        fs.Close();
-        saved = true;
-	    return;
-    }
+		fs.Write(bytes, 0, bytes.Length);
+		fs.Close();
+	}
 }

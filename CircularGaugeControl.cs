@@ -953,7 +953,6 @@ public class CircularGaugeControl : Control
 
         if (pointer != null)
         {
-            double db1 = 0;
             Double oldcurr_realworldunit = 0;
             Double newcurr_realworldunit = 0;
             Double realworldunit = (ScaleSweepAngle / (MaxValue - MinValue));
@@ -964,26 +963,8 @@ public class CircularGaugeControl : Control
                 isInitialValueSet = true;
 
             }
-            if (oldValue < 0)
-            {
-                db1 = MinValue + Math.Abs(oldValue);
-                oldcurr_realworldunit = ((double)(Math.Abs(db1 * realworldunit)));
-            }
-            else
-            {
-                db1 = Math.Abs(MinValue) + oldValue;
-                oldcurr_realworldunit = ((double)(db1 * realworldunit));
-            }
-            if (newValue < 0)
-            {
-                db1 = MinValue + Math.Abs(newValue);
-                newcurr_realworldunit = ((double)(Math.Abs(db1 * realworldunit)));
-            }
-            else
-            {
-                db1 = Math.Abs(MinValue) + newValue;
-                newcurr_realworldunit = ((double)(db1 * realworldunit));
-            }
+            oldcurr_realworldunit = ((double)(Math.Abs((oldValue - MinValue) * realworldunit)));
+            newcurr_realworldunit = ((double)((newValue - MinValue) * realworldunit));
 
             Double oldcurrentvalueAngle = (ScaleStartAngle + oldcurr_realworldunit);
             Double newcurrentvalueAngle = (ScaleStartAngle + newcurr_realworldunit);

@@ -28,7 +28,7 @@
     </Style>
     <Style TargetType="Border">
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BorderBrush" Value="gray" />
+      <Setter Property="BorderBrush" Value="#333333" />
       <Setter Property="Background" Value="Black"/>
     </Style>
   </Window.Resources>
@@ -51,8 +51,8 @@
     <Border Canvas.Left="443" Canvas.Top="259" Visibility="{Binding cruise}">
       <TextBlock Text="{Binding setspeed}" Width="140" FontSize="100" />
     </Border>
-    <TextBlock Text="{Binding captpos1}" Width="200" Canvas.Left="0" Canvas.Top="70" FontSize="40" />
-    <TextBlock Text="{Binding captpos2}" Width="200" Canvas.Left="0" Canvas.Top="110" FontSize="40" />
+    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="70" FontSize="40" />
+    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="110" FontSize="40" />
     <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="600" Canvas.Top="0" FontSize="40" />
     <Border Canvas.Left="131" Canvas.Top="161" >
       <TextBlock Text="{Binding volts}" Width="200" FontSize="80" />
@@ -63,7 +63,7 @@
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
-                                        ScaleLabelRadius="115"
+                                        ScaleLabelRadius="120"
                                         ScaleLabelSize="40,20"
                                         ScaleLabelFontSize="14"
                                         PointerLength="90" 
@@ -74,19 +74,13 @@
                                         MaxValue="250" 
                                         MajorDivisionsCount="10" 
                                         MinorDivisionsCount="5" 
-                                        OptimalRangeStartValue="140"
-                                        OptimalRangeEndValue="200"
                                         CurrentValue="{Binding water}"
-                                        RangeIndicatorThickness="9"
-                                        RangeIndicatorRadius="80"
-                                        RangeIndicatorLightRadius="10"
-                                        RangeIndicatorLightOffset="80"
                                         ScaleLabelForeground="White"
                                         MajorTickSize="10,3"
                                         MinorTickSize="3,1"
                                         MajorTickColor="White"
                                         MinorTickColor="LightGray"
-                                        GaugeBackgroundColor="CornflowerBlue"
+                                        GaugeBackgroundColor="{Binding hotwater}"
                                         PointerThickness ="5"
                                         DialTextOffset="40"
                                         DialText="Coolant Temp"
@@ -99,8 +93,8 @@
                                         ScaleRadius="60" 
                                         PointerLength="50" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="67"
-                                        ScaleLabelSize="30,20"
+                                        ScaleLabelRadius="75"
+                                        ScaleLabelSize="25,10"
                                         ScaleLabelFontSize="10"
                                         ScaleStartAngle="140" 
                                         ScaleSweepAngle="270"
@@ -114,10 +108,38 @@
                                         MinorTickSize="3,1"
                                         MajorTickColor="White"
                                         MinorTickColor="LightGray"
-                                        GaugeBackgroundColor="CornflowerBlue"
+                                        GaugeBackgroundColor="Black"
                                         PointerThickness ="5"
                                         DialTextOffset="40"
-                                        DialText="Trans Temp"
+                                        DialText="Trans&#10;Temp"
+                                        DialTextColor="DarkBlue"
+                                        DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        />
+
+    <local:CircularGaugeControl Canvas.Left="100" Canvas.Top="770"
+                                        Radius="100" 
+                                        ScaleRadius="60" 
+                                        PointerLength="50" 
+                                        PointerCapRadius="35" 
+                                        ScaleLabelRadius="75"
+                                        ScaleLabelSize="25,10"
+                                        ScaleLabelFontSize="10"
+                                        ScaleStartAngle="140" 
+                                        ScaleSweepAngle="270"
+                                        MinValue="0" 
+                                        MaxValue="250" 
+                                        MajorDivisionsCount="10" 
+                                        MinorDivisionsCount="5" 
+                                        CurrentValue="{Binding inttemp}"
+                                        ScaleLabelForeground="White"
+                                        MajorTickSize="10,3"
+                                        MinorTickSize="3,1"
+                                        MajorTickColor="White"
+                                        MinorTickColor="LightGray"
+                                        GaugeBackgroundColor="{Binding lowinttemp}"
+                                        PointerThickness ="5"
+                                        DialTextOffset="40"
+                                        DialText="Intake&#10;Temp"
                                         DialTextColor="DarkBlue"
                                         DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
@@ -141,48 +163,44 @@
                                         MinorTickColor="LightGray"
                                         GaugeBackgroundColor="{Binding lowfuel}" 
                                         PointerThickness ="16"
-                                        OptimalRangeStartValue="20"
-                                        OptimalRangeEndValue="100" 
                                         DialTextOffset="40" 
                                         DialText="Fuel"
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.224,0.656"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="69" Canvas.Top="654"
+    <local:CircularGaugeControl Canvas.Left="1373" Canvas.Top="769"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="70"
-                                        ScaleLabelSize="30,20"
+                                        ScaleLabelRadius="73"
+                                        ScaleLabelSize="25,10"
                                         ScaleLabelFontSize="10"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
                                         MinValue="0" 
-                                        MaxValue="150" 
-                                        MajorDivisionsCount="10" 
+                                        MaxValue="80" 
+                                        MajorDivisionsCount="8" 
                                         CurrentValue="{Binding oil}"
                                         ScaleLabelForeground="LightGray"
                                         MajorTickSize="10,3"
                                         MinorTickSize="3,1"
                                         MajorTickColor="LightGray"
                                         MinorTickColor="LightGray"
-                                        GaugeBackgroundColor="DarkBlue"
+                                        GaugeBackgroundColor="{Binding lowoil}"
                                         PointerThickness ="16"
-                                        OptimalRangeStartValue="300"
-                                        OptimalRangeEndValue="700" 
                                         DialTextOffset="40" 
                                         DialText="Oil Pressure"
-                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1518" Canvas.Top="654"
+    <local:CircularGaugeControl Canvas.Left="1578" Canvas.Top="628"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="67"
-                                        ScaleLabelSize="30,20"
+                                        ScaleLabelRadius="73"
+                                        ScaleLabelSize="25,10"
                                         ScaleLabelFontSize="10"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
@@ -198,8 +216,6 @@
                                         MinorTickColor="LightGray"
                                         GaugeBackgroundColor="Black"
                                         PointerThickness ="16"
-                                        OptimalRangeStartValue="300"
-                                        OptimalRangeEndValue="700" 
                                         DialTextOffset="40" 
                                         DialText="Turbo"
                                         DialTextColor="Black"
@@ -211,7 +227,7 @@
                                         PointerLength="60" 
                                         PointerCapRadius="35" 
                                         ScaleLabelRadius="85"
-                                        ScaleLabelSize="40,30"
+                                        ScaleLabelSize="30,25"
                                         ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
@@ -224,10 +240,8 @@
                                         MinorTickSize="3,1"
                                         MajorTickColor="LightGray"
                                         MinorTickColor="LightGray"
-                                        GaugeBackgroundColor="Black"
+                                        GaugeBackgroundColor="{Binding lowairprim}"
                                         PointerThickness ="16"
-                                        OptimalRangeStartValue="300"
-                                        OptimalRangeEndValue="700" 
                                         DialTextOffset="40" 
                                         DialText="Front Air"
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
@@ -239,7 +253,7 @@
                                         PointerLength="60" 
                                         PointerCapRadius="35" 
                                         ScaleLabelRadius="85"
-                                        ScaleLabelSize="40,30"
+                                        ScaleLabelSize="30,25"
                                         ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
@@ -252,10 +266,8 @@
                                         MinorTickSize="3,1"
                                         MajorTickColor="LightGray"
                                         MinorTickColor="LightGray"
-                                        GaugeBackgroundColor="Black"
+                                        GaugeBackgroundColor="{Binding lowairsec}"
                                         PointerThickness ="16"
-                                        OptimalRangeStartValue="300"
-                                        OptimalRangeEndValue="700" 
                                         DialTextOffset="40" 
                                         DialText="Rear Air"
                                         DialTextColor="Black" HorizontalAlignment="Center" VerticalAlignment="Top"
@@ -293,21 +305,14 @@
 
 
     </local:CircularGaugeControl>
-    <Label Content="Volts:" Canvas.Left="30" Canvas.Top="194" FontSize="40"/>
     <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
     <Ellipse Height="33" Width="50" Fill="{Binding high}" Canvas.Left="935" Canvas.Top="100"/>
     <Polygon Points="0,50 50,0 50,25 100,25 100,75 50,75 50,100" Fill="{Binding leftturn}" Canvas.Left="420" Canvas.Top="520" />
     <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Fill="{Binding rightturn}" Canvas.Left="1450" Canvas.Top="520" />
-    <TextBlock FontSize="30" Background="{Binding lowair}" Canvas.Left="950" Text="Low&#10;Air" Canvas.Top="590"/>
     <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590"/>
     <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594"/>
-    <TextBlock FontSize="30" Background="{Binding wait}" Canvas.Left="524" Text="Wait To&#10;Start" Canvas.Top="591"/>
     <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="443" Text="Ret" Canvas.Top="160"/>
     <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="443" Text="Ret" Canvas.Top="79"/>
-    <StackPanel Orientation="Horizontal" Canvas.Top="0" Canvas.Left="30">
-      <Label Content="Intake Temp" FontSize="50" />
-      <TextBlock Text="{Binding inttemp}" FontSize="50" />
-    </StackPanel>
   </Canvas>
 </Window>
   
