@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
+    private bool showVolts = false;
     private SerRead capt1 = null, capt2 = null;
     public MainWindow()
     {
@@ -57,7 +58,7 @@ public partial class MainWindow : Window
 		}
 		else
 		{
-			tECU.Start(capt1 = new SerRead(7, 0, "binE.dat"));
+			tECU.Start(capt1 = new SerRead("binE.dat"));
 			//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
 		}
         gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
@@ -197,7 +198,7 @@ public partial class MainWindow : Window
             if (!outOfWhack)
                 foreach (Msg m in toSend)
                 {
-                    if (m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
+                    if (false && m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
                     if (RemPIDs.Contains(m.pid)) continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
@@ -213,9 +214,30 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
     private static HashSet<int> RemPIDs =>
         new HashSet<int>()
-            { 2,3,70,71,83,89,91,187,194 };
+            { 1,2,3,70,71,83,89,91,92,108,121,151,164,183,187,191,194 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
-	public void DoUIChange()
+
+    private void MPG_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
+        else gauges.showmpg = "Hidden";
+    }
+
+    private void Volts_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (gauges.showvolts.Equals("Hidden"))
+        {
+            showVolts = true;
+            gauges.showvolts = "Visble";
+        }
+        else
+        {
+            showVolts = false;
+            gauges.showvolts = "Hidden";
+        }
+    }
+
+    public void DoUIChange()
     {
         while (true)
         {
@@ -238,36 +260,46 @@ public partial class MainWindow : Window
                 gauges.captpos1 = capt1.CaptPos();
             if (capt2 != null)
                 gauges.captpos2 = capt2.CaptPos();
+            gauges.msgs = mlw.Count() > 0 ? "Visible" : "Hidden";
+            gauges.lowwater = "Hidden";
             //mlw.AddToList(m);
             switch (m.pid)
             {
                 case 44: gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
-                case 40: gauges.retardersw = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
-                case 47: gauges.retarder = (val & 0x1) > 0 ? "Green" : "DarkGray"; break;
+                case 40: gauges.retardersw = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
+                case 47: gauges.retarder = (val & 0x3) > 0 ? "Visible" : "Hidden"; break;
+                case 49: gauges.abs = (val & 0x3f) > 0 ? "Visible" : "Hidden"; break;
                 // case 70: gauges.brake = (val & 0x80) > 0 ? "Red" : "DarkGray"; break;
                 case 84: gauges.speed = val / 2; break;
                 case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
+                case 92: break; // pct engine load
                 case 96: gauges.fuel = val / 2; gauges.lowfuel = val < 30 ? "Yellow" : "Black"; break;
                 case 100: gauges.oil = val / 2; gauges.lowoil = val < 20 ? "Yellow" : val < 10 ? "Red" : "Black"; break;
+                case 108: break; // barometer
                 case 102: gauges.boost = val / 8; break;
-                case 105: gauges.inttemp = val; gauges.lowinttemp = val < 70 ? "cornflowerblue" : "Black"; break;
+                case 105: gauges.inttemp = val; gauges.lowinttemp = val < 70 && gauges.rpm < 0.5M ? "cornflowerblue" : "Black"; break;
                 case 110: gauges.water = val; gauges.hotwater = val > 217 ? "Yellow" : val > 225 ? "Red": "Black"; break;
                 case 117: gauges.airPrim = val * 3 / 5; gauges.lowairprim = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
+                case 121: break; // engine retarder
+                case 164: break; // injection control pressure
+                case 183: break; // fuel rate
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
-				case 168: gauges.volts = ((decimal)val * .05M).ToString("F1"); break;
+				case 168: { decimal dval = (decimal)val * .05M;
+                        gauges.volts = dval.ToString("F1"); gauges.showvolts = dval < 12.8M || showVolts ? "Visible" : "Hidden"; break;
+                    }
                 case 177: gauges.transTemp = val / 4; break;
 				case 184: gauges.instfuel = ((decimal)val / 256).ToString("F1"); break;
 				case 185: gauges.avgfuel = ((decimal)val / 256).ToString("F1"); break;
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-				case 505: gauges.rightturn = bVal ? "Green" : "DarkGray"; break;
-				case 506: gauges.leftturn = bVal ? "Green" : "DarkGray"; break;
-				case 507: gauges.high = bVal ? "Blue" : "DarkGray"; break;
+				case 505: gauges.rightturn = bVal ? "Green" : "Black"; break;
+				case 506: gauges.leftturn = bVal ? "Green" : "Black"; break;
+				case 507: gauges.high = bVal ? "Blue" : "Black"; break;
 				default:
                     mlw.AddToList(m);
 					break;
@@ -538,19 +570,31 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _oil, value, "oil");
         }
     }
-	private string _hotwater;
-	public string hotwater
-	{
-		get
-		{
-			return _hotwater;
-		}
-		set
-		{
-			SetField(ref _hotwater, value, "hotwater");
-		}
-	}
-	private int _water;
+    private string _msgs;
+    public string msgs
+    {
+        get
+        {
+            return _msgs;
+        }
+        set
+        {
+            SetField(ref _msgs, value, "msgs");
+        }
+    }
+    private string _hotwater;
+    public string hotwater
+    {
+        get
+        {
+            return _hotwater;
+        }
+        set
+        {
+            SetField(ref _hotwater, value, "hotwater");
+        }
+    }
+    private int _water;
     public int water
     {
         get
@@ -850,7 +894,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowairsec, value, "lowairsec");
 		}
 	}
-	private string _lowwater;
+    private string _lowwater;
     public string lowwater
     {
         get
@@ -860,6 +904,42 @@ public class Gauges : INotifyPropertyChanged
         set
         {
             SetField(ref _lowwater, value, "lowwater");
+        }
+    }
+    private string _showmpg = "Hidden";
+    public string showmpg
+    {
+        get
+        {
+            return _showmpg;
+        }
+        set
+        {
+            SetField(ref _showmpg, value, "showmpg");
+        }
+    }
+    private string _showvolts = "Hidden";
+    public string showvolts
+    {
+        get
+        {
+            return _showvolts;
+        }
+        set
+        {
+            SetField(ref _showvolts, value, "showvolts");
+        }
+    }
+    private string _abs;
+    public string abs
+    {
+        get
+        {
+            return _abs;
+        }
+        set
+        {
+            SetField(ref _abs, value, "abs");
         }
     }
     private string _stopeng;

@@ -27,39 +27,72 @@
       <Setter Property="Foreground" Value="gray" />
     </Style>
     <Style TargetType="Border">
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BorderBrush" Value="#333333" />
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="BorderBrush" Value="gray" />
       <Setter Property="Background" Value="Black"/>
+    </Style>
+    <Style x:Key="Err" TargetType="{x:Type Label}">
+      <Setter Property="Foreground" Value="Black" />
+      <Setter Property="Background" Value="Red"/>
+      <Setter Property="FontSize" Value="40"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="Margin" Value="10,0,10,0"/>
     </Style>
   </Window.Resources>
   <Canvas Background="Black">
-    <Border Canvas.Left="630" Canvas.Top="259">
-      <TextBlock Text="{Binding speed}" Width="250" FontSize="180" />
+    <StackPanel Canvas.Left="590" Canvas.Top="250" Orientation="Vertical">
+      <Border>
+        <StackPanel Orientation="Vertical">
+          <Label Content="MPH" FontSize="20" BorderThickness="1" HorizontalAlignment="Center"/>
+          <Border>
+            <TextBlock Text="{Binding speed}" MinWidth="330" FontSize="300" LineHeight="280" LineStackingStrategy="BlockLineHeight"/>
+          </Border>
+        </StackPanel>
+      </Border>
+      <Border HorizontalAlignment="Center">
+        <TextBlock Text="{Binding miles}" FontSize="40" />
+      </Border>
+    </StackPanel>
+    <Border Canvas.Left="340" Canvas.Top="65" >
+      <StackPanel Orientation="Vertical">
+        <Label Content="Set" HorizontalAlignment="Center" FontSize="20" />
+        <TextBlock Text="{Binding transel}" MinWidth="140" FontSize="100" LineHeight="90" LineStackingStrategy="BlockLineHeight"/>
+      </StackPanel>
     </Border>
-    <Border Canvas.Left="740" Canvas.Top="63">
-      <TextBlock Text="{Binding tranattain}" Width="140" FontSize="100" />
+    <Border Canvas.Left="540" Canvas.Top="65">
+      <StackPanel Orientation="Vertical">
+        <Label Content="Gear" HorizontalAlignment="Center" FontSize="20" />
+        <TextBlock Text="{Binding tranattain}" MinWidth="140" FontSize="100" LineHeight="90" LineStackingStrategy="BlockLineHeight" />
+      </StackPanel>
     </Border>
-    <Border Canvas.Left="540" Canvas.Top="63">
-      <TextBlock Text="{Binding transel}" Width="140" FontSize="100" />
+
+    <Border Canvas.Left="55" Canvas.Top="170" >
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
+        <Label MouseDown="Volts_MouseDown" Content="V" VerticalAlignment="Bottom" FontSize="30" />
+      </StackPanel>
     </Border>
-    <Border Canvas.Left="55" Canvas.Top="315">
-      <TextBlock Text="{Binding instfuel}" Width="140" FontSize="100" />
+    <Border Canvas.Left="55" Canvas.Top="310">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="{Binding instfuel}" Visibility="{Binding showmpg}" Width="160" FontSize="80" />
+        <Label MouseDown="MPG_MouseDown" Content="MPG" FontSize="30" VerticalAlignment="Bottom"/>
+      </StackPanel>
     </Border>
-    <Border Canvas.Left="55" Canvas.Top="473">
-      <TextBlock Text="{Binding avgfuel}" Width="140" FontSize="100" />
+    <Border Canvas.Left="55" Canvas.Top="450">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Text="{Binding avgfuel}" Width="160" FontSize="80" />
+        <Label Content="Avg&#10;MPG" FontSize="30" VerticalAlignment="Bottom"/>
+      </StackPanel>
     </Border>
-    <Border Canvas.Left="443" Canvas.Top="259" Visibility="{Binding cruise}">
-      <TextBlock Text="{Binding setspeed}" Width="140" FontSize="100" />
+    <Border Canvas.Left="400" Canvas.Top="259" Visibility="{Binding cruise}">
+      <StackPanel Orientation="Vertical">
+        <Label Content="Cruise" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBlock Text="{Binding setspeed}" Width="140" FontSize="100" />
+      </StackPanel>
     </Border>
-    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="70" FontSize="40" />
-    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="110" FontSize="40" />
+    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="906" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
+    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="973" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
     <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="600" Canvas.Top="0" FontSize="40" />
-    <Border Canvas.Left="131" Canvas.Top="161" >
-      <TextBlock Text="{Binding volts}" Width="200" FontSize="80" />
-    </Border>
-    <Border Canvas.Left="655" Canvas.Top="518">
-      <TextBlock Text="{Binding miles}" Width="200" FontSize="40"  />
-    </Border>
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
@@ -70,9 +103,9 @@
                                         PointerCapRadius="35" 
                                         ScaleStartAngle="140" 
                                         ScaleSweepAngle="270"
-                                        MinValue="0" 
+                                        MinValue="70" 
                                         MaxValue="250" 
-                                        MajorDivisionsCount="10" 
+                                        MajorDivisionsCount="9" 
                                         MinorDivisionsCount="5" 
                                         CurrentValue="{Binding water}"
                                         ScaleLabelForeground="White"
@@ -88,7 +121,7 @@
                                         DialTextFontSize="30" HorizontalAlignment="Left" VerticalAlignment="Center"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="344" Canvas.Top="770"
+    <local:CircularGaugeControl Canvas.Left="380" Canvas.Top="770"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
@@ -116,7 +149,7 @@
                                         DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="100" Canvas.Top="770"
+    <local:CircularGaugeControl Canvas.Left="120" Canvas.Top="630"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
@@ -168,7 +201,7 @@
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.224,0.656"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1373" Canvas.Top="769"
+    <local:CircularGaugeControl Canvas.Left="1360" Canvas.Top="769"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
@@ -194,14 +227,11 @@
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1578" Canvas.Top="628"
+    <local:CircularGaugeControl Canvas.Left="1600" Canvas.Top="630"
                                         Radius="100" 
                                         ScaleRadius="60" 
                                         PointerLength="50" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="73"
-                                        ScaleLabelSize="25,10"
-                                        ScaleLabelFontSize="10"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
                                         MinValue="0" 
@@ -218,10 +248,10 @@
                                         PointerThickness ="16"
                                         DialTextOffset="40" 
                                         DialText="Turbo"
-                                        DialTextColor="Black"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1578" Canvas.Top="70"
+    <local:CircularGaugeControl Canvas.Left="1580" Canvas.Top="70"
                                         Radius="120" 
                                         ScaleRadius="75" 
                                         PointerLength="60" 
@@ -244,10 +274,10 @@
                                         PointerThickness ="16"
                                         DialTextOffset="40" 
                                         DialText="Front Air"
-                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        DialTextColor="Black" HorizontalAlignment="Center" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1581" Canvas.Top="331"
+    <local:CircularGaugeControl Canvas.Left="1580" Canvas.Top="335"
                                         Radius="120" 
                                         ScaleRadius="75" 
                                         PointerLength="60" 
@@ -270,7 +300,7 @@
                                         PointerThickness ="16"
                                         DialTextOffset="40" 
                                         DialText="Rear Air"
-                                        DialTextColor="Black" HorizontalAlignment="Center" VerticalAlignment="Top"
+                                        DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
     <!--DarkSlateGray gauge-->
@@ -295,7 +325,7 @@
                                         MinorTickSize="9,1"
                                         MajorTickColor="DarkGray"
                                         MinorTickColor="DarkGray"
-                                        GaugeBackgroundColor="DarkSlateGray"
+                                        GaugeBackgroundColor="Black"
                                         PointerThickness ="12"
                                         DialTextOffset="40"
                                         DialText="RPM"
@@ -305,14 +335,18 @@
 
 
     </local:CircularGaugeControl>
-    <TextBlock FontSize="30" Background="{Binding brake}" Canvas.Left="313" Text="Park" Canvas.Top="585"/>
     <Ellipse Height="33" Width="50" Fill="{Binding high}" Canvas.Left="935" Canvas.Top="100"/>
     <Polygon Points="0,50 50,0 50,25 100,25 100,75 50,75 50,100" Fill="{Binding leftturn}" Canvas.Left="420" Canvas.Top="520" />
     <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Fill="{Binding rightturn}" Canvas.Left="1450" Canvas.Top="520" />
-    <TextBlock FontSize="30" Background="{Binding lowwater}" Canvas.Left="675" Text="Low&#10;Water" Canvas.Top="590"/>
-    <TextBlock FontSize="30" Background="{Binding stopeng}" Canvas.Left="810" Text="Stop&#10;Engine" Canvas.Top="594"/>
-    <TextBlock FontSize="30" Background="{Binding retarder}" Canvas.Left="443" Text="Ret" Canvas.Top="160"/>
-    <TextBlock FontSize="30" Background="{Binding retardersw}" Canvas.Left="443" Text="Ret" Canvas.Top="79"/>
+    <StackPanel Visibility="{Binding retardersw}" Orientation="Vertical" Canvas.Left="767" Canvas.Top="65" >
+      <Label Content="Ret" FontSize="20" HorizontalAlignment="Center" />
+      <Label  Content="On" FontWeight="Bold" FontSize="30" Visibility="{Binding retarder}" HorizontalAlignment="Center"/>
+    </StackPanel>
+    <StackPanel Orientation="Horizontal" Canvas.Left="500" Canvas.Top="640">
+      <Label Content="Coolant" Style="{StaticResource Err}" Visibility="{Binding lowwater}" />
+      <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" />
+      <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
+    </StackPanel>
   </Canvas>
 </Window>
   

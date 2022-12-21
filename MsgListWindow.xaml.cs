@@ -51,6 +51,7 @@ namespace RVDash
 				}
 			}
 		}
+        public int Count() => MsgList.Count;
 		public void AddToList(Msg m)
 		{
 			var i = MsgList.IndexOf(m);
