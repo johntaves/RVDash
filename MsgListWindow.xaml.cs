@@ -40,7 +40,7 @@ namespace RVDash
 			{
 				foreach (Screen s in Screen.AllScreens)
 				{
-					if (!s.Primary)
+					if (s.Primary)
 					{
 						var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
 										Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
