@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
+    private ulong savedTank = 0;
     private bool showVolts = false;
     private SerRead capt1 = null, capt2 = null;
     public MainWindow()
@@ -28,6 +29,7 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
+        savedTank = Properties.Settings.Default.CurTank;
 	}
 	void Window_Loaded(object sender, RoutedEventArgs e)
 	{
@@ -214,7 +216,7 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
     private static HashSet<int> RemPIDs =>
         new HashSet<int>()
-            { 1,2,3,70,71,83,89,91,92,108,121,151,164,183,187,191,194 };
+            { 1,2,3,70,71,83,89,91,92,151,187,191,194,501,502,503,504 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
     private void MPG_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -274,7 +276,7 @@ public partial class MainWindow : Window
                 case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
                 case 92: break; // pct engine load
-                case 96: gauges.fuel = val / 2; gauges.lowfuel = val < 30 ? "Yellow" : "Black"; break;
+                case 96: break; // gauges.fuel = val / 2; gauges.lowfuel = val < 30 ? "Yellow" : "Black"; break;
                 case 100: gauges.oil = val / 2; gauges.lowoil = val < 20 ? "Yellow" : val < 10 ? "Red" : "Black"; break;
                 case 108: break; // barometer
                 case 102: gauges.boost = val / 8; break;
@@ -284,7 +286,6 @@ public partial class MainWindow : Window
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 121: break; // engine retarder
                 case 164: break; // injection control pressure
-                case 183: break; // fuel rate
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
@@ -292,7 +293,21 @@ public partial class MainWindow : Window
                         gauges.volts = dval.ToString("F1"); gauges.showvolts = dval < 12.8M || showVolts ? "Visible" : "Hidden"; break;
                     }
                 case 177: gauges.transTemp = val / 4; break;
-				case 184: gauges.instfuel = ((decimal)val / 256).ToString("F1"); break;
+                case 183:
+                    TimeSpan s = DateTime.Now - m.dt;
+                    ulong gasval = (ulong)val * Convert.ToUInt64(s.TotalMicroseconds);
+                    if (gasval > Properties.Settings.Default.CurTank)
+                        Properties.Settings.Default.CurTank = 0;
+                    else Properties.Settings.Default.CurTank -= gasval;
+                    gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
+                    if (gasval == 0 && Properties.Settings.Default.CurTank != savedTank)
+                    {
+                        Properties.Settings.Default.Save();
+                        savedTank = Properties.Settings.Default.CurTank;
+                    }
+                    gauges.lowfuel = gauges.fuel < 15 ? "Yellow" : "Black";
+                    break; // fuel rate (4.34 x 10-6gal/s or 1/64 gal/h)
+                case 184: gauges.instfuel = ((decimal)val / 256).ToString("F1"); break;
 				case 185: gauges.avgfuel = ((decimal)val / 256).ToString("F1"); break;
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
@@ -407,6 +422,7 @@ public class Msg
     public UInt16 pid;
     public object value;
     public int cnt=1;
+    public DateTime dt = DateTime.Now;
     public Msg(byte m, UInt16 p, object v)
     {
         mid = m;
