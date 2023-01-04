@@ -199,6 +199,7 @@
                                         DialTextOffset="40" 
                                         DialText="Fuel"
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.224,0.656"
+                                        MouseDown="Fuel_MouseDown" 
                                         />
 
     <local:CircularGaugeControl Canvas.Left="1360" Canvas.Top="769"

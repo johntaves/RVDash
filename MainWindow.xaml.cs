@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Forms;
 using System.Collections;
+using System.Windows.Input;
 
 namespace RVDash;
 
@@ -219,13 +220,13 @@ public partial class MainWindow : Window
             { 1,2,3,70,71,83,89,91,92,151,187,191,194,501,502,503,504 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
-    private void MPG_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
         else gauges.showmpg = "Hidden";
     }
 
-    private void Volts_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (gauges.showvolts.Equals("Hidden"))
         {
@@ -237,6 +238,17 @@ public partial class MainWindow : Window
             showVolts = false;
             gauges.showvolts = "Hidden";
         }
+    }
+
+    private void Fuel_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender.GetType() != typeof(CircularGaugeControl))
+            return;
+        CircularGaugeControl c = (CircularGaugeControl)sender;
+        Point p = e.GetPosition(c);
+        var dv = c.GetValue(p);
+        ulong nv = Convert.ToUInt64(dv);
+        Properties.Settings.Default.CurTank = Properties.Settings.Default.Tank * nv / 100;
     }
 
     public void DoUIChange()

@@ -975,6 +975,20 @@ public class CircularGaugeControl : Control
         }
 
     }
+    public double GetValue(Point p)
+    {
+        double ang = (180 / Math.PI) * Math.Atan2( p.Y - Radius, p.X - Radius);
+        if (ang < 0) ang += 360;
+        double diffAng = ang - ScaleStartAngle;
+        if (diffAng < 0) diffAng += 360;
+        if (diffAng > ScaleSweepAngle)
+        {
+            double halfExAng = (360 - ScaleSweepAngle) / 2;
+            if (diffAng > ScaleSweepAngle + halfExAng) diffAng = 0;
+            else diffAng = ScaleSweepAngle;
+        }
+        return ((diffAng * (MaxValue - MinValue)) / ScaleSweepAngle) + MinValue;
+    }
 
     /// <summary>
     /// Animates the pointer to the current value to the new one
