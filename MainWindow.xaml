@@ -197,7 +197,7 @@
                                         GaugeBackgroundColor="{Binding lowfuel}" 
                                         PointerThickness ="16"
                                         DialTextOffset="40" 
-                                        DialText="Fuel"
+                                        DialText="{Binding fuelvals}"
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.224,0.656"
                                         MouseDown="Fuel_MouseDown" 
                                         />

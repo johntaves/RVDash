@@ -19,7 +19,8 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
-    private ulong savedTank = 0;
+	ushort curResFuel = 0;
+	private ulong savedTank = 0;
     private bool showVolts = false;
     private SerRead capt1 = null, capt2 = null;
     public MainWindow()
@@ -122,7 +123,7 @@ public partial class MainWindow : Window
                 ushort pid = (UInt16)(500 + ch);
                 if (RemPIDs.Contains(pid))
                     continue;
-                Msg m = new Msg(140, pid, val > 400);
+                Msg m = new Msg(140, pid, val);
                 lock (queue) queue.Enqueue(m);
                 Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
             }
@@ -247,6 +248,7 @@ public partial class MainWindow : Window
 	{
 		gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
 		gauges.lowfuel = gauges.fuel < 15 ? "Yellow" : "Black";
+		gauges.fuelvals = string.Format(" Fuel\r{0} {1}", curResFuel.ToString("D2"), gauges.fuel.ToString("D2"));
 	}
 
 	private void Fuel_MouseDown(object sender, MouseButtonEventArgs e)
@@ -263,6 +265,7 @@ public partial class MainWindow : Window
 
     public void DoUIChange()
     {
+        decimal curVolts = 0;
         while (true)
         {
             Msg m = null;
@@ -274,12 +277,9 @@ public partial class MainWindow : Window
             }
             gauges.errs = OOWCnt;
             int val = 0;
-            bool bVal = false;
             Type t = m.value.GetType();
             if (t == typeof(byte) || t == typeof(UInt16))
                 val = Convert.ToInt32(m.value);
-            if (t == typeof(bool))
-                bVal = Convert.ToBoolean(m.value);
             if (capt1 != null)
                 gauges.captpos1 = capt1.CaptPos();
             if (capt2 != null)
@@ -311,8 +311,8 @@ public partial class MainWindow : Window
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
-				case 168: { decimal dval = (decimal)val * .05M;
-                        gauges.volts = dval.ToString("F1"); gauges.showvolts = dval < 12.8M || showVolts ? "Visible" : "Hidden"; break;
+				case 168: { curVolts = (decimal)val * .05M;
+                        gauges.volts = curVolts.ToString("F1"); gauges.showvolts = curVolts < 12.6M || showVolts ? "Visible" : "Hidden"; break;
                     }
                 case 177: gauges.transTemp = val / 4; break;
                 case 183:
@@ -333,9 +333,14 @@ public partial class MainWindow : Window
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
                 case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-				case 505: gauges.rightturn = bVal ? "Green" : "Black"; break;
-				case 506: gauges.leftturn = bVal ? "Green" : "Black"; break;
-				case 507: gauges.high = bVal ? "Blue" : "Black"; break;
+				case 505: gauges.rightturn = val > 400 ? "Green" : "Black"; break;
+				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
+				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
+                case 508: 
+                    decimal R = 769M / ((curVolts / (decimal)val) - 1M);
+					curResFuel = Convert.ToUInt16(129.1573M - (0.980531M * R) + (0.001846232M * R * R)); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
+                    updateFuel();
+                    break;
 				default:
                     mlw.AddToList(m);
 					break;
@@ -1022,19 +1027,31 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _engprot, value, "engprot");
         }
     }
-    private int _fuel;
-    public int fuel
-    {
-        get
-        {
-            return _fuel;
-        }
-        set
-        {
-            SetField(ref _fuel, value, "fuel");
-        }
-    }
-    private int _inttemp;
+	private string _fuelvals;
+	public string fuelvals
+	{
+		get
+		{
+			return _fuelvals;
+		}
+		set
+		{
+			SetField(ref _fuelvals, value, "fuelvals");
+		}
+	}
+	private int _fuel;
+	public int fuel
+	{
+		get
+		{
+			return _fuel;
+		}
+		set
+		{
+			SetField(ref _fuel, value, "fuel");
+		}
+	}
+	private int _inttemp;
     public int inttemp
     {
         get
