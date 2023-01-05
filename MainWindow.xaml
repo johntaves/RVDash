@@ -90,9 +90,9 @@
         <TextBlock Text="{Binding setspeed}" Width="140" FontSize="100" />
       </StackPanel>
     </Border>
-    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="906" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
-    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="973" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
-    <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="600" Canvas.Top="0" FontSize="40" />
+    <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="0" Canvas.Top="900" FontSize="40" />
+    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="950" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
+    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="1000" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
@@ -230,8 +230,8 @@
 
     <local:CircularGaugeControl Canvas.Left="1600" Canvas.Top="630"
                                         Radius="100" 
-                                        ScaleRadius="60" 
-                                        PointerLength="50" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
