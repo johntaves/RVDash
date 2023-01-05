@@ -32,7 +32,7 @@ public partial class MainWindow : Window
 		mlw = new MsgListWindow();
         mlw.Show();
         savedTank = Properties.Settings.Default.CurTank;
-	}
+    }
 	void Window_Loaded(object sender, RoutedEventArgs e)
 	{
 		Thread tECU = new Thread(readLoop);
@@ -222,7 +222,7 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
     private static HashSet<int> RemPIDs =>
         new HashSet<int>()
-            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503,504,508,509 };
+            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503,504,509 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
     private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
@@ -257,9 +257,17 @@ public partial class MainWindow : Window
             return;
         CircularGaugeControl c = (CircularGaugeControl)sender;
         Point p = e.GetPosition(c);
-        var dv = c.GetValue(p);
-        ulong nv = Convert.ToUInt64(dv);
-        Properties.Settings.Default.CurTank = Properties.Settings.Default.Tank * nv / 100;
+        bool inCenter;
+        var dv = c.GetValue(p,out inCenter);
+        if (inCenter)
+        {
+            Properties.Settings.Default.CurTank = curResFuel;
+        }
+        else
+        {
+            ulong nv = Convert.ToUInt64(dv);
+            Properties.Settings.Default.CurTank = Properties.Settings.Default.Tank * nv / 100;
+        }
         updateFuel();
     }
 
@@ -338,7 +346,10 @@ public partial class MainWindow : Window
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
                 case 508: 
                     decimal R = 769M / ((curVolts / (decimal)val) - 1M);
-					curResFuel = Convert.ToUInt16(129.1573M - (0.980531M * R) + (0.001846232M * R * R)); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
+                    decimal p = 129.1573M - (0.980531M * R) + (0.001846232M * R * R); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
+                    if (p < 0) curResFuel = 0;
+                    else if (p > 100) curResFuel = 100;
+                    else curResFuel = Convert.ToUInt16(p);  
                     updateFuel();
                     break;
 				default:
