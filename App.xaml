@@ -4,5 +4,5 @@
              xmlns:local="clr-namespace:RVDash"
              StartupUri="MainWindow.xaml"
               Exit="App_Exit"
-             ShutdownMode="OnLastWindowClose">
+             ShutdownMode="OnMainWindowClose">
 </Application>

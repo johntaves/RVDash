@@ -65,6 +65,7 @@ public partial class MainWindow : Window
 			//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
 		}
         gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
+        updateFuel();
 	}
 	void Window_DBLClick(object sender, RoutedEventArgs e)
 	{
@@ -118,7 +119,10 @@ public partial class MainWindow : Window
                 if (line.Length < 10) continue;
                 int ch = int.Parse(line.Substring(2, 1));
                 int val = int.Parse(line.Substring(4, 4));
-                Msg m = new Msg(140, (UInt16)(500 + ch), val > 400);
+                ushort pid = (UInt16)(500 + ch);
+                if (RemPIDs.Contains(pid))
+                    continue;
+                Msg m = new Msg(140, pid, val > 400);
                 lock (queue) queue.Enqueue(m);
                 Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
             }
@@ -217,7 +221,7 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
     private static HashSet<int> RemPIDs =>
         new HashSet<int>()
-            { 1,2,3,70,71,83,89,91,92,151,187,191,194,501,502,503,504 };
+            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503,504,508,509 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
     private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
@@ -239,8 +243,13 @@ public partial class MainWindow : Window
             gauges.showvolts = "Hidden";
         }
     }
+    private void updateFuel()
+	{
+		gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
+		gauges.lowfuel = gauges.fuel < 15 ? "Yellow" : "Black";
+	}
 
-    private void Fuel_MouseDown(object sender, MouseButtonEventArgs e)
+	private void Fuel_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (sender.GetType() != typeof(CircularGaugeControl))
             return;
@@ -249,6 +258,7 @@ public partial class MainWindow : Window
         var dv = c.GetValue(p);
         ulong nv = Convert.ToUInt64(dv);
         Properties.Settings.Default.CurTank = Properties.Settings.Default.Tank * nv / 100;
+        updateFuel();
     }
 
     public void DoUIChange()
@@ -311,13 +321,12 @@ public partial class MainWindow : Window
                     if (gasval > Properties.Settings.Default.CurTank)
                         Properties.Settings.Default.CurTank = 0;
                     else Properties.Settings.Default.CurTank -= gasval;
-                    gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
                     if (gasval == 0 && Properties.Settings.Default.CurTank != savedTank)
                     {
                         Properties.Settings.Default.Save();
                         savedTank = Properties.Settings.Default.CurTank;
                     }
-                    gauges.lowfuel = gauges.fuel < 15 ? "Yellow" : "Black";
+                    updateFuel();
                     break; // fuel rate (4.34 x 10-6gal/s or 1/64 gal/h)
                 case 184: gauges.instfuel = ((decimal)val / 256).ToString("F1"); break;
 				case 185: gauges.avgfuel = ((decimal)val / 256).ToString("F1"); break;
@@ -358,6 +367,7 @@ public class SerRead
         sp = new SerialPort();
         sp.PortName = string.Format("COM{0}", port);
         sp.BaudRate = 9600;
+        sp.ReadTimeout = 1000;
         sp.Open();
     }
 	public int CaptPos() => d.CaptPos();
@@ -392,10 +402,16 @@ public class SerRead
         int len=0;
         if (sp != null)
         {
-            if (d == null)
-                len = sp.Read(data, writePos, amt);
-            else if (sp != null && d != null)
-                len = ReadCapt(data, writePos, amt);
+            try
+            {
+                if (d == null)
+                    len = sp.Read(data, writePos, amt);
+                else if (sp != null && d != null)
+                    len = ReadCapt(data, writePos, amt);
+            } catch (IOException)
+            {
+                len = 0;
+            }
         }
         else
         {
