@@ -977,7 +977,7 @@ public class CircularGaugeControl : Control
     }
     public double GetValue(Point p, out bool inCenter)
     {
-        inCenter = Math.Pow(p.X - Radius, 2) + Math.Pow(p.Y - Radius, 2) < Math.Pow(Radius, 2);
+        inCenter = Math.Pow(p.X - Radius, 2) + Math.Pow(p.Y - Radius, 2) < Math.Pow(Radius/2, 2);
         double ang = (180 / Math.PI) * Math.Atan2( p.Y - Radius, p.X - Radius);
         if (ang < 0) ang += 360;
         double diffAng = ang - ScaleStartAngle;
