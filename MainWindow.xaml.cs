@@ -260,9 +260,7 @@ public partial class MainWindow : Window
         bool inCenter;
         var dv = c.GetValue(p,out inCenter);
         if (inCenter)
-        {
             Properties.Settings.Default.CurTank = curResFuel;
-        }
         else
         {
             ulong nv = Convert.ToUInt64(dv);
