@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using System.Windows.Forms;
 using System.Collections;
 using System.Windows.Input;
+using System.Runtime.InteropServices;
 
 namespace RVDash;
 
@@ -109,6 +110,7 @@ public partial class MainWindow : Window
     }
     private void readADC(object port)
     {
+        NativeMethods.PreventSleep();
         SerialPort sp = new SerialPort();
         sp.BaudRate = 115200;
         sp.PortName = string.Format("COM{0}",port);
@@ -125,7 +127,7 @@ public partial class MainWindow : Window
                 if (RemPIDs.Contains(pid))
                     continue;
                 decimal dval = decimal.Parse(line.Substring(9, 5));
-                if (pid == 508)
+                if (pid == 504)
                     Vr = dval;
                 if (pid == 509)
                 {
@@ -143,6 +145,7 @@ public partial class MainWindow : Window
 	}
     private void readLoop(object sr)
     {
+        NativeMethods.PreventSleep();
         SerRead serialPort = (SerRead)sr;
         bool outOfWhack = false;
         Dictionary<string,DateTime> msgs = new Dictionary<string,DateTime>();
@@ -233,7 +236,7 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
     private static HashSet<int> RemPIDs =>
         new HashSet<int>()
-            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503,504 };
+            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
     private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
@@ -346,6 +349,7 @@ public partial class MainWindow : Window
 				case 505: mlw.AddToList(m); gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
+                case 508: gauges.drawers = val < 400 ? "Red" : "Black"; break;
                 case 510:
                     decimal R = 770M / ((decimal)m.value - 1M);
                     decimal p = 129.1573M - (0.980531M * R) + (0.001846232M * R * R); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
@@ -872,6 +876,18 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _leftturn, value, "leftturn");
 		}
 	}
+	private string _drawers;
+	public string drawers
+	{
+		get
+		{
+			return _drawers;
+		}
+		set
+		{
+			SetField(ref _drawers, value, "drawers");
+		}
+	}
 	private string _high;
 	public string high
 	{
@@ -1177,5 +1193,26 @@ public class Dat
 
 		fs.Write(bytes, 0, bytes.Length);
 		fs.Close();
+	}
+}
+internal static class NativeMethods
+{
+	public static void PreventSleep()
+	{
+		SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+	}
+	public static void AllowSleep()
+	{
+		SetThreadExecutionState(ExecutionState.EsContinuous);
+	}
+	[DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+	private static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
+	[FlagsAttribute]
+	private enum ExecutionState : uint
+	{
+		EsAwaymodeRequired = 0x00000040,
+		EsContinuous = 0x80000000,
+		EsDisplayRequired = 0x00000002,
+		EsSystemRequired = 0x00000001
 	}
 }

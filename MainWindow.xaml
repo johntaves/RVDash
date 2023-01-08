@@ -348,6 +348,7 @@
       <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" />
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
     </StackPanel>
+    <Ellipse Height="32" Width="50" Fill="{Binding drawers}" Canvas.Left="1600" Canvas.Top="854" HorizontalAlignment="Left" VerticalAlignment="Top"/>
   </Canvas>
 </Window>
   
