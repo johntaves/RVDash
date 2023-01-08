@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private bool showVolts = false;
 	private decimal curVolts = 0;
 	private SerRead capt1 = null, capt2 = null;
+    private bool Ign = false;
     public MainWindow()
     {
         InitializeComponent();
@@ -132,6 +133,7 @@ public partial class MainWindow : Window
                 if (pid == 509)
                 {
                     decimal Vs = dval * 1094M / 100M;
+                    Ign = Vs > 5;
 					lock (queue) queue.Enqueue(new Msg(140, 511, Vs));
 					if (Vr > 0 && Vs > 5 && Vs > Vr)
                         lock (queue) queue.Enqueue(new Msg(140, 510, Vs / Vr));
@@ -349,7 +351,7 @@ public partial class MainWindow : Window
 				case 505: mlw.AddToList(m); gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
-                case 508: gauges.drawers = val < 400 ? "Red" : "Black"; break;
+                case 508: gauges.drawers = val < 400 && Ign ? "Red" : "Black"; break;
                 case 510:
                     decimal R = 770M / ((decimal)m.value - 1M);
                     decimal p = 129.1573M - (0.980531M * R) + (0.001846232M * R * R); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
@@ -1199,7 +1201,7 @@ internal static class NativeMethods
 {
 	public static void PreventSleep()
 	{
-		SetThreadExecutionState(ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
+		SetThreadExecutionState(ExecutionState.EsDisplayRequired | ExecutionState.EsContinuous | ExecutionState.EsSystemRequired);
 	}
 	public static void AllowSleep()
 	{
