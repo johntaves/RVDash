@@ -24,7 +24,6 @@ public partial class MainWindow : Window
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
-	private double galsUsed = 0;
     private double curSpeed=0;
 	private SerRead capt1 = null, capt2 = null;
     private bool Ign = false;
@@ -365,8 +364,6 @@ public partial class MainWindow : Window
                     Properties.Settings.Default.MPGGas += gasval;
 					gauges.avgfuel = ((curOdo - Properties.Settings.Default.MPGMiles) * 64M * 3600M * 100000M / Properties.Settings.Default.MPGGas).ToString("F1");
 
-					galsUsed += (double)gasval * 4.34 * Math.Pow(10,-12);
-                    mlw.AddToList(new Msg('C', 127, 600, galsUsed));
                     if (gasval > Properties.Settings.Default.CurTank)
                         Properties.Settings.Default.CurTank = 0;
                     else Properties.Settings.Default.CurTank -= gasval;
