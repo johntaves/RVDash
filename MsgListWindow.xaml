@@ -11,6 +11,7 @@
     <ListView.View>
       <GridView x:Name="grdNames">
         <GridViewColumn Header="###" DisplayMemberBinding="{Binding Cnt}"/>
+        <GridViewColumn Header="C" DisplayMemberBinding="{Binding Src}"/>
         <GridViewColumn Header="Code__________" DisplayMemberBinding="{Binding Code}"/>
         <GridViewColumn Header="Data_______________________" DisplayMemberBinding="{Binding Data}"/>
         <GridViewColumn Header="MID__________________________________" DisplayMemberBinding="{Binding MID}"/>

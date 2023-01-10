@@ -87,17 +87,17 @@
     <Border Canvas.Left="400" Canvas.Top="259" Visibility="{Binding cruise}">
       <StackPanel Orientation="Vertical">
         <Label Content="Cruise" FontSize="20" HorizontalAlignment="Center"/>
-        <TextBlock Text="{Binding setspeed}" Width="140" FontSize="100" />
+        <TextBlock Text="{Binding setspeed}" Visibility="{Binding cruiseact}" Width="140" FontSize="100" />
       </StackPanel>
     </Border>
     <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="0" Canvas.Top="900" FontSize="40" />
-    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="950" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
-    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="1000" FontSize="40" HorizontalAlignment="Center" VerticalAlignment="Top" />
+    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="950" FontSize="40"  />
+    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="1000" FontSize="40"  />
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
                                         ScaleLabelRadius="120"
-                                        ScaleLabelSize="40,20"
+                                        ScaleLabelSize="30,20"
                                         ScaleLabelFontSize="14"
                                         PointerLength="90" 
                                         PointerCapRadius="35" 
@@ -121,14 +121,14 @@
                                         DialTextFontSize="30" HorizontalAlignment="Left" VerticalAlignment="Center"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="380" Canvas.Top="770"
-                                        Radius="100" 
-                                        ScaleRadius="60" 
-                                        PointerLength="50" 
+    <local:CircularGaugeControl Canvas.Left="360" Canvas.Top="770"
+                                        Radius="120" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="75"
-                                        ScaleLabelSize="25,10"
-                                        ScaleLabelFontSize="10"
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="140" 
                                         ScaleSweepAngle="270"
                                         MinValue="0" 
@@ -149,14 +149,14 @@
                                         DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="120" Canvas.Top="630"
-                                        Radius="100" 
-                                        ScaleRadius="60" 
-                                        PointerLength="50" 
+    <local:CircularGaugeControl Canvas.Left="80" Canvas.Top="630"
+                                        Radius="120" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="75"
-                                        ScaleLabelSize="25,10"
-                                        ScaleLabelFontSize="10"
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="140" 
                                         ScaleSweepAngle="270"
                                         MinValue="0" 
@@ -177,7 +177,7 @@
                                         DialTextFontSize="60" HorizontalAlignment="Left" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1000" Canvas.Top="719"
+    <local:CircularGaugeControl Canvas.Left="980" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="120" 
                                         PointerLength="110" 
@@ -202,14 +202,14 @@
                                         MouseDown="Fuel_MouseDown" 
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1360" Canvas.Top="769"
-                                        Radius="100" 
-                                        ScaleRadius="60" 
-                                        PointerLength="50" 
+    <local:CircularGaugeControl Canvas.Left="1320" Canvas.Top="769"
+                                        Radius="120" 
+                                        ScaleRadius="75" 
+                                        PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="73"
-                                        ScaleLabelSize="25,10"
-                                        ScaleLabelFontSize="10"
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
                                         MinValue="0" 
@@ -229,16 +229,18 @@
                                         />
 
     <local:CircularGaugeControl Canvas.Left="1600" Canvas.Top="630"
-                                        Radius="100" 
+                                        Radius="120" 
                                         ScaleRadius="75" 
                                         PointerLength="60" 
                                         PointerCapRadius="35" 
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
+                                        ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
                                         MinValue="0" 
-                                        MaxValue="150" 
-                                        MajorDivisionsCount="5" 
-                                        MinorDivisionsCount="3"
+                                        MaxValue="35" 
+                                        MajorDivisionsCount="7" 
                                         CurrentValue="{Binding boost}"
                                         ScaleLabelForeground="LightGray"
                                         MajorTickSize="10,3"
@@ -252,13 +254,13 @@
                                         DialTextColor="Black" HorizontalAlignment="Left" VerticalAlignment="Center"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1580" Canvas.Top="70"
+    <local:CircularGaugeControl Canvas.Left="1600" Canvas.Top="70"
                                         Radius="120" 
                                         ScaleRadius="75" 
                                         PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="85"
-                                        ScaleLabelSize="30,25"
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
                                         ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"
@@ -278,13 +280,13 @@
                                         DialTextColor="Black" HorizontalAlignment="Center" VerticalAlignment="Top"
                                         />
 
-    <local:CircularGaugeControl Canvas.Left="1580" Canvas.Top="335"
+    <local:CircularGaugeControl Canvas.Left="1600" Canvas.Top="335"
                                         Radius="120" 
                                         ScaleRadius="75" 
                                         PointerLength="60" 
                                         PointerCapRadius="35" 
-                                        ScaleLabelRadius="85"
-                                        ScaleLabelSize="30,25"
+                                        ScaleLabelRadius="90"
+                                        ScaleLabelSize="30,20"
                                         ScaleLabelFontSize="12"
                                         ScaleStartAngle="180" 
                                         ScaleSweepAngle="180"

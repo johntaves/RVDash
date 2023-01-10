@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Collections;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
+using System.Security.Permissions;
 
 namespace RVDash;
 
@@ -23,7 +24,8 @@ public partial class MainWindow : Window
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
-	private decimal curVolts = 0;
+	private double galsUsed = 0;
+    private double curSpeed=0;
 	private SerRead capt1 = null, capt2 = null;
     private bool Ign = false;
     public MainWindow()
@@ -48,27 +50,27 @@ public partial class MainWindow : Window
 		{
 			if (true)
 			{
-				tECU.Start(new SerRead(10));
-				tVDC.Start(new SerRead(6));
+				tECU.Start(new SerRead('E',10));
+				tVDC.Start(new SerRead('I',6));
 			}
 			else if (false)
 			{
-				tECU.Start(capt1 = new SerRead(10, 70000, "binE.dat"));
-				tVDC.Start(capt2 = new SerRead(6, 70000, "binV.dat"));
+				tECU.Start(capt1 = new SerRead('E', 10, 70000, "binE.dat"));
+				tVDC.Start(capt2 = new SerRead('I', 6, 70000, "binV.dat"));
 			}
 			else
 			{
-				tECU.Start(capt1 = new SerRead("binE.dat"));
-				tVDC.Start(capt2 = new SerRead("binV.dat"));
+				tECU.Start(capt1 = new SerRead('E', "binE.dat"));
+				tVDC.Start(capt2 = new SerRead('I', "binV.dat"));
 			}
 			tADC.Start(8);
 		}
 		else
 		{
-			tECU.Start(capt1 = new SerRead("binE.dat"));
-			//tVDC.Start(capt2 = new SerRead(6, 10000, "binV2.dat"));
+			tECU.Start(capt1 = new SerRead('E', "binE.dat"));
+			//tVDC.Start(capt2 = new SerRead('I',6, 10000, "binV2.dat"));
 		}
-        gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
+		gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
         updateFuel();
 	}
 	void Window_DBLClick(object sender, RoutedEventArgs e)
@@ -129,16 +131,19 @@ public partial class MainWindow : Window
                     continue;
                 decimal dval = decimal.Parse(line.Substring(9, 5));
                 if (pid == 504)
+                {
                     Vr = dval;
+                    continue;
+                }
                 if (pid == 509)
                 {
                     decimal Vs = dval * 1094M / 100M;
                     Ign = Vs > 5;
-					lock (queue) queue.Enqueue(new Msg(140, 511, Vs));
 					if (Vr > 0 && Vs > 5 && Vs > Vr)
-                        lock (queue) queue.Enqueue(new Msg(140, 510, Vs / Vr));
+                        lock (queue) queue.Enqueue(new Msg('A',140, 510, Vs / Vr));
+                    continue;
                 }
-				Msg m = new Msg(140, pid, Convert.ToUInt16(dval * 1000M));
+				Msg m = new Msg('A', 127, pid, Convert.ToUInt16(dval * 1000M));
                 lock (queue) queue.Enqueue(m);
                 Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
             }
@@ -217,13 +222,15 @@ public partial class MainWindow : Window
                     outOfWhack = true;
                 if (packetLen > 21)
                     outOfWhack = true;
-				toSend.Add(new Msg(MID, pid, value));
+				toSend.Add(new Msg(serialPort.name,MID, pid, value));
             }
             if (!outOfWhack)
                 foreach (Msg m in toSend)
                 {
-                    if (false && m.mid != 140 && InstPIDs.Contains(m.pid)) continue;
-                    if (RemPIDs.Contains(m.pid)) continue;
+                    if (m.mid != 140 && InstPIDs.Contains(m.pid))
+                        continue;
+                    if (RemPIDs.Contains(m.pid) || RemMIDs.Contains(m.mid))
+                        continue;
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
                         msgs[m.Code] = DateTime.Now;
@@ -236,9 +243,14 @@ public partial class MainWindow : Window
     private static HashSet<int> InstPIDs =>
         new HashSet<int>()
             { 84,96,100,102,110,117,118,168,177,190,245 };
-    private static HashSet<int> RemPIDs =>
-        new HashSet<int>()
-            { 1,2,3,70,71,83,89,91,92,151,187,191,194,500,501,502,503 };
+	private static HashSet<int> RemPIDs =>
+		new HashSet<int>()
+			{ 0,1,2,3,70,71,83,89,91,92,151,187,191,194,244,500,501,502,503 };
+	private static HashSet<int> RemMIDs =>
+	new HashSet<int>()
+		{ 190,199,225,226 };
+	private static HashSet<int> okPIDs =>
+        new HashSet<int>() { 199, 225 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 
     private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
@@ -262,9 +274,10 @@ public partial class MainWindow : Window
     }
     private void updateFuel()
 	{
-		gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
+        //	gauges.fuel = (int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank);
+        gauges.fuel = curResFuel;
 		gauges.lowfuel = gauges.fuel < 15 ? "Yellow" : "Black";
-		gauges.fuelvals = string.Format(" Fuel\r{0} {1}", curResFuel.ToString("D2"), gauges.fuel.ToString("D2"));
+		gauges.fuelvals = string.Format(" Fuel\r{0} {1}", curResFuel.ToString("D2"), ((int)(Properties.Settings.Default.CurTank * 100L / Properties.Settings.Default.Tank)).ToString("D2"));
 	}
 
 	private void Fuel_MouseDown(object sender, MouseButtonEventArgs e)
@@ -278,8 +291,14 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.CurTank = Properties.Settings.Default.Tank * (inCenter ? curResFuel : Convert.ToUInt64(dv)) / 100;
 		updateFuel();
     }
-
-    public void DoUIChange()
+    private Queue<ushort> fuelPct = new();
+    private ushort fuelPctSum = 0;
+	private ulong fuelQsum = 0, mileSum = 0, oldestOdo = 0, curOdo = 0;
+	private Queue<InstFuel> fuelQ = new();
+	private DateTime oldestFuelDt, lastFuel;
+    private InstFuel curIF = null;
+	private bool gotFuel = false;
+	public void DoUIChange()
     {
         while (true)
         {
@@ -299,7 +318,6 @@ public partial class MainWindow : Window
                 gauges.captpos1 = capt1.CaptPos();
             if (capt2 != null)
                 gauges.captpos2 = capt2.CaptPos();
-            gauges.msgs = mlw.Count() > 0 ? "Visible" : "Hidden";
             gauges.lowwater = "Hidden";
             //mlw.AddToList(m);
             switch (m.pid)
@@ -309,8 +327,8 @@ public partial class MainWindow : Window
                 case 47: gauges.retarder = (val & 0x3) > 0 ? "Visible" : "Hidden"; break;
                 case 49: gauges.abs = (val & 0x3f) > 0 ? "Visible" : "Hidden"; break;
                 // case 70: gauges.brake = (val & 0x80) > 0 ? "Red" : "DarkGray"; break;
-                case 84: gauges.speed = val / 2; break;
-                case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
+                case 84: gauges.speed = val / 2; curSpeed = (double)val / 2; break;
+                case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; gauges.cruiseact = (val & 0x80) != 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
                 case 92: break; // pct engine load
                 case 96: break; // gauges.fuel = val / 2; gauges.lowfuel = val < 30 ? "Yellow" : "Black"; break;
@@ -331,8 +349,46 @@ public partial class MainWindow : Window
                     }
                 case 177: gauges.transTemp = val / 4; break;
                 case 183:
-                    TimeSpan s = DateTime.Now - m.dt;
+                    if (!gotFuel)
+                    {
+                        if (curOdo == 0)
+                            break;
+                        lastFuel = oldestFuelDt = m.dt;
+                        gotFuel = true;
+                        oldestOdo = curOdo;
+                        break;
+                    }
+					TimeSpan s = m.dt - lastFuel;
+                    lastFuel = m.dt;
                     ulong gasval = (ulong)val * Convert.ToUInt64(s.TotalMicroseconds);
+                    if (gasval == 0)
+                        break;
+					fuelQsum += gasval;
+					if (curIF == null || curOdo != curIF.odo)
+                    {
+                        if (curIF != null)
+                        {
+                            fuelQ.Enqueue(curIF);
+							gauges.avgfuel = ((curOdo - oldestOdo) * 64M * 3600M * 100000M / fuelQsum).ToString("F1");
+						}
+						curIF = new InstFuel(m.dt, gasval, curOdo);
+                    }
+                    else
+                    {
+                        curIF.dt = m.dt;
+                        curIF.ga += gasval;
+                    }
+
+                    while (curOdo - oldestOdo > 10)
+                    {
+                        InstFuel f = fuelQ.Dequeue();
+                        oldestFuelDt = f.dt;
+                        fuelQsum -= f.ga;
+                        oldestOdo = f.odo;
+                    }
+
+					galsUsed += (double)gasval * 4.34 * Math.Pow(10,-12);
+                    mlw.AddToList(new Msg('C', 127, 600, galsUsed));
                     if (gasval > Properties.Settings.Default.CurTank)
                         Properties.Settings.Default.CurTank = 0;
                     else Properties.Settings.Default.CurTank -= gasval;
@@ -341,27 +397,38 @@ public partial class MainWindow : Window
                         Properties.Settings.Default.Save();
                         savedTank = Properties.Settings.Default.CurTank;
                     }
-                    updateFuel();
+					mlw.AddToList(new Msg('C', 127, 601, fuelQ.Count));
+					mlw.AddToList(new Msg('C', 127, 602, ((curOdo - oldestOdo) / 10M).ToString("F1")+"m"));
+					mlw.AddToList(new Msg('C', 127, 603, fuelQsum));
+					mlw.AddToList(new Msg('C', 127, 604, Properties.Settings.Default.CurTank));
+					updateFuel();
                     break; // fuel rate (4.34 x 10-6gal/s or 1/64 gal/h)
-                case 184: gauges.instfuel = ((decimal)val / 256).ToString("F1"); break;
-				case 185: gauges.avgfuel = ((decimal)val / 256).ToString("F1"); break;
+                case 184: gauges.instfuel = ((decimal)val / 256M).ToString("F1"); break;
+				case 185:  break; // avg fuel
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
-                case 245: gauges.miles = (BitConverter.ToInt32((byte[])m.value) * .1M).ToString("F1"); break;
-				case 505: mlw.AddToList(m); gauges.rightturn = val > 400 ? "Green" : "Black"; break;
+                case 245: curOdo = BitConverter.ToUInt32((byte[])m.value); if (curOdo > 1000000) curOdo = 0; gauges.miles = (curOdo * .1M).ToString("F1"); break;
+				case 505: gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
                 case 508: gauges.drawers = val < 400 && Ign ? "Red" : "Black"; break;
                 case 510:
                     decimal R = 770M / ((decimal)m.value - 1M);
                     decimal p = 129.1573M - (0.980531M * R) + (0.001846232M * R * R); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
-                    if (p < 0) curResFuel = 0;
-                    else if (p > 100) curResFuel = 100;
-                    else curResFuel = Convert.ToUInt16(p);  
+                    if (p < 0) p = 0;
+                    else if (p > 100) p = 100;
+                    ushort fp = Convert.ToUInt16(p);
+                    fuelPct.Enqueue(fp);
+                    fuelPctSum += fp;
+                    curResFuel = (ushort)(fuelPctSum / fuelPct.Count);
+                    while (fuelPct.Count > 10)
+                        fuelPctSum -= fuelPct.Dequeue();
                     updateFuel();
                     break;
 				default:
                     mlw.AddToList(m);
+                    if (!okPIDs.Contains(m.pid))
+						gauges.msgs = "Visible";
 					break;
             }
         }
@@ -371,19 +438,23 @@ public class SerRead
 {
     private SerialPort sp = null;
     private Dat d;
+    public char name;
     byte readPos = 0, writePos = 0;
     byte[] data = new byte[256];
-    public SerRead(int port)
+    public SerRead(char n,int port)
     {
+        name = n;
         OpenPort(port);
     }
-    public SerRead(string fn)
+    public SerRead(char n, string fn)
     {
-        d = new Dat(fn);
+		name = n;
+		d = new Dat(fn);
     }
-    public SerRead(int port, int size, string fn)
+    public SerRead(char n, int port, int size, string fn)
     {
-        d = new Dat(size, fn);
+		name = n;
+		d = new Dat(size, fn);
         OpenPort(port);
     }
     private void OpenPort(int port)
@@ -474,9 +545,11 @@ public class Msg
     public UInt16 pid;
     public object value;
     public int cnt=1;
+    public char source;
     public DateTime dt = DateTime.Now;
-    public Msg(byte m, UInt16 p, object v)
+    public Msg(char n,byte m, UInt16 p, object v)
     {
+        source = n;
         mid = m;
         pid = p;
         value = v;
@@ -504,6 +577,7 @@ public class Msg
             return mid.ToString();
         }
     }
+    public string Src => source.ToString();
     public string PID
     {
         get
@@ -638,7 +712,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _oil, value, "oil");
         }
     }
-    private string _msgs;
+    private string _msgs = "Hidden";
     public string msgs
     {
         get
@@ -864,6 +938,18 @@ public class Gauges : INotifyPropertyChanged
 		set
 		{
 			SetField(ref _cruise, value, "cruise");
+		}
+	}
+	private string _cruiseact;
+	public string cruiseact
+	{
+		get
+		{
+			return _cruiseact;
+		}
+		set
+		{
+			SetField(ref _cruiseact, value, "cruiseact");
 		}
 	}
 	private string _leftturn;
@@ -1094,18 +1180,18 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _inttemp, value, "inttemp");
         }
     }
-    private int _errs;
-    public int errs
-    {
-        get
-        {
-            return _errs;
-        }
-        set
-        {
-            SetField(ref _errs, value, "errs");
-        }
-    }
+	private int _errs;
+	public int errs
+	{
+		get
+		{
+			return _errs;
+		}
+		set
+		{
+			SetField(ref _errs, value, "errs");
+		}
+	}
 }
 
 public class Dat

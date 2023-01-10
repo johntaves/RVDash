@@ -6,7 +6,8 @@ public class IDMaps
 {
 	public static IReadOnlyDictionary<int, string> MIDs =>
 	new Dictionary<int, string>() {
-{128,"Engine #1"}
+		{ 127, "ME" }
+,{128,"Engine #1"}
 ,{129,"Turbocharger"}
 ,{130,"Transmission"}
 ,{131,"Power Takeoff"}

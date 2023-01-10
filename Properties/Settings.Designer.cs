@@ -46,5 +46,29 @@ namespace RVDash.Properties {
                 this["CurTank"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public ulong MPGMiles {
+            get {
+                return ((ulong)(this["MPGMiles"]));
+            }
+            set {
+                this["MPGMiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public ulong MPGGas {
+            get {
+                return ((ulong)(this["MPGGas"]));
+            }
+            set {
+                this["MPGGas"] = value;
+            }
+        }
     }
 }
