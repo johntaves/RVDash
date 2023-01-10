@@ -50,9 +50,9 @@ namespace RVDash.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public ulong MPGMiles {
+        public uint MPGMiles {
             get {
-                return ((ulong)(this["MPGMiles"]));
+                return ((uint)(this["MPGMiles"]));
             }
             set {
                 this["MPGMiles"] = value;

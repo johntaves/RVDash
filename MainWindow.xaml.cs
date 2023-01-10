@@ -258,6 +258,11 @@ public partial class MainWindow : Window
         if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
         else gauges.showmpg = "Hidden";
     }
+    private void AvgMPG_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        Properties.Settings.Default.MPGGas = 0;
+        Properties.Settings.Default.MPGMiles = curOdo;
+    }
 
     private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
     {
@@ -293,10 +298,8 @@ public partial class MainWindow : Window
     }
     private Queue<ushort> fuelPct = new();
     private ushort fuelPctSum = 0;
-	private ulong fuelQsum = 0, mileSum = 0, oldestOdo = 0, curOdo = 0;
-	private Queue<InstFuel> fuelQ = new();
-	private DateTime oldestFuelDt, lastFuel;
-    private InstFuel curIF = null;
+    private uint curOdo=0;
+	private DateTime lastFuel;
 	private bool gotFuel = false;
 	public void DoUIChange()
     {
@@ -351,11 +354,7 @@ public partial class MainWindow : Window
                 case 183:
                     if (!gotFuel)
                     {
-                        if (curOdo == 0)
-                            break;
-                        lastFuel = oldestFuelDt = m.dt;
-                        gotFuel = true;
-                        oldestOdo = curOdo;
+                        lastFuel = m.dt;
                         break;
                     }
 					TimeSpan s = m.dt - lastFuel;
@@ -363,29 +362,8 @@ public partial class MainWindow : Window
                     ulong gasval = (ulong)val * Convert.ToUInt64(s.TotalMicroseconds);
                     if (gasval == 0)
                         break;
-					fuelQsum += gasval;
-					if (curIF == null || curOdo != curIF.odo)
-                    {
-                        if (curIF != null)
-                        {
-                            fuelQ.Enqueue(curIF);
-							gauges.avgfuel = ((curOdo - oldestOdo) * 64M * 3600M * 100000M / fuelQsum).ToString("F1");
-						}
-						curIF = new InstFuel(m.dt, gasval, curOdo);
-                    }
-                    else
-                    {
-                        curIF.dt = m.dt;
-                        curIF.ga += gasval;
-                    }
-
-                    while (curOdo - oldestOdo > 10)
-                    {
-                        InstFuel f = fuelQ.Dequeue();
-                        oldestFuelDt = f.dt;
-                        fuelQsum -= f.ga;
-                        oldestOdo = f.odo;
-                    }
+                    Properties.Settings.Default.MPGGas += gasval;
+					gauges.avgfuel = ((curOdo - Properties.Settings.Default.MPGMiles) * 64M * 3600M * 100000M / Properties.Settings.Default.MPGGas).ToString("F1");
 
 					galsUsed += (double)gasval * 4.34 * Math.Pow(10,-12);
                     mlw.AddToList(new Msg('C', 127, 600, galsUsed));
@@ -397,9 +375,6 @@ public partial class MainWindow : Window
                         Properties.Settings.Default.Save();
                         savedTank = Properties.Settings.Default.CurTank;
                     }
-					mlw.AddToList(new Msg('C', 127, 601, fuelQ.Count));
-					mlw.AddToList(new Msg('C', 127, 602, ((curOdo - oldestOdo) / 10M).ToString("F1")+"m"));
-					mlw.AddToList(new Msg('C', 127, 603, fuelQsum));
 					mlw.AddToList(new Msg('C', 127, 604, Properties.Settings.Default.CurTank));
 					updateFuel();
                     break; // fuel rate (4.34 x 10-6gal/s or 1/64 gal/h)
@@ -421,7 +396,7 @@ public partial class MainWindow : Window
                     fuelPct.Enqueue(fp);
                     fuelPctSum += fp;
                     curResFuel = (ushort)(fuelPctSum / fuelPct.Count);
-                    while (fuelPct.Count > 10)
+                    while (fuelPct.Count > 20)
                         fuelPctSum -= fuelPct.Dequeue();
                     updateFuel();
                     break;

@@ -66,19 +66,19 @@
       </StackPanel>
     </Border>
 
-    <Border Canvas.Left="55" Canvas.Top="170" >
+    <Border MouseDown="Volts_MouseDown" Canvas.Left="55" Canvas.Top="170" >
       <StackPanel Orientation="Horizontal">
         <TextBlock Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
-        <Label MouseDown="Volts_MouseDown" Content="V" VerticalAlignment="Bottom" FontSize="30" />
+        <Label Content="V" VerticalAlignment="Bottom" FontSize="30" />
       </StackPanel>
     </Border>
-    <Border Canvas.Left="55" Canvas.Top="310">
+    <Border MouseDown="MPG_MouseDown" Canvas.Left="55" Canvas.Top="310">
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="{Binding instfuel}" Visibility="{Binding showmpg}" Width="160" FontSize="80" />
-        <Label MouseDown="MPG_MouseDown" Content="MPG" FontSize="30" VerticalAlignment="Bottom"/>
+        <Label Content="MPG" FontSize="30" VerticalAlignment="Bottom"/>
       </StackPanel>
     </Border>
-    <Border Canvas.Left="55" Canvas.Top="450">
+    <Border MouseDown="AvgMPG_MouseDown" Canvas.Left="55" Canvas.Top="450">
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="{Binding avgfuel}" Width="160" FontSize="80" />
         <Label Content="Avg&#10;MPG" FontSize="30" VerticalAlignment="Bottom"/>
