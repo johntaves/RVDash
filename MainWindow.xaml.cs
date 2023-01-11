@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
+    private Cameras cams;
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
@@ -35,6 +36,8 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
+       // cams = new Cameras();
+        //cams.Show();
         savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
