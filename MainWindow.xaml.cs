@@ -36,8 +36,6 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
-        cams = new Cameras();
-        cams.Show();
         savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
@@ -260,12 +258,42 @@ public partial class MainWindow : Window
         if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
         else gauges.showmpg = "Hidden";
     }
-    private void AvgMPG_MouseDown(object sender, MouseButtonEventArgs e)
+	private void AvgMPG_MouseDown(object sender, MouseButtonEventArgs e)
+	{
+		Properties.Settings.Default.MPGGas = 0;
+		Properties.Settings.Default.MPGMiles = curOdo;
+	}
+	bool openWithButton = false;
+	private void Camera_Closed()
     {
-        Properties.Settings.Default.MPGGas = 0;
-        Properties.Settings.Default.MPGMiles = curOdo;
+        cams = null;
+        openWithButton = false;
     }
-
+    private void toggleCamera(bool fromButton,bool isR = false)
+    {
+		if (cams == null)
+		{
+            if (fromButton)
+                openWithButton = true;
+            else if (!isR)
+                return;
+			cams = new Cameras(Camera_Closed);
+			cams.Show();
+		}
+		else
+		{
+            if (fromButton)
+                openWithButton = true;
+            if (fromButton || isR)
+                cams.Activate();
+            if (!openWithButton && !fromButton && !isR)
+    			cams.Close();
+		}
+	}
+	private void Camera_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        toggleCamera(true);
+    }
     private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (gauges.showvolts.Equals("Hidden"))
@@ -348,15 +376,7 @@ public partial class MainWindow : Window
                 case 164: break; // injection control pressure
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
-                    if (gauges.transel.StartsWith("R") && cams == null)
-                    {
-						cams = new Cameras();
-						cams.Show();
-					} else if (!gauges.transel.StartsWith("R") && cams != null)
-                    {
-                        cams.Close();
-                        cams = null;
-                    }
+                    toggleCamera(false, gauges.transel.StartsWith("R"));
 					break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
 				case 168: { decimal v = (decimal)val * .05M;

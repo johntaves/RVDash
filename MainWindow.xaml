@@ -351,6 +351,11 @@
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
     </StackPanel>
     <Ellipse Height="32" Width="50" Fill="{Binding drawers}" Canvas.Left="1600" Canvas.Top="854" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+    <Image MouseDown="Camera_MouseDown" Canvas.Left="1472" Canvas.Top="19" Width="100">
+      <Image.Source>
+        <BitmapImage  UriSource="rearview-mirror.png" />
+      </Image.Source>
+    </Image>
   </Canvas>
 </Window>
   

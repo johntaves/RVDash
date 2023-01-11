@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="rearview-mirror.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="icons8-speed-96.ico" />
   </ItemGroup>
 
@@ -21,6 +25,10 @@
     <PackageReference Include="LibVLCSharp.WPF" Version="3.6.7" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.18" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="rearview-mirror.png" />
   </ItemGroup>
 
   <ItemGroup>

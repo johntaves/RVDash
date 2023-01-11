@@ -1,7 +1,10 @@
 ﻿using LibVLCSharp.Shared;
 using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Threading;
+using static System.Net.WebRequestMethods;
 
 namespace RVDash
 {
@@ -10,22 +13,29 @@ namespace RVDash
 	/// </summary>
 	public partial class Cameras : Window
 	{
-		LibVLC _libVLC;
-		MediaPlayer _mediaPlayer;
+		LibVLC libVLC;
+		MediaPlayer mediaPlayer;
 		public Cameras()
 		{
 			InitializeComponent();
 			videoView.Loaded += VideoView_Loaded;
 		}
-
+		public Cameras(Action cl)
+		{
+			InitializeComponent();
+			videoView.Loaded += VideoView_Loaded;
+			this.Closed += (s, e) => { cl(); };
+		}
 		void VideoView_Loaded(object sender, RoutedEventArgs e)
 		{
 			Core.Initialize();
 
-			_libVLC = new LibVLC(new string[] { "--video-filter=transform", "--transform-type=hflip" });
-			_mediaPlayer = new MediaPlayer(_libVLC);
-			videoView.MediaPlayer = _mediaPlayer;
-			_mediaPlayer.Play(new Media(_libVLC, new Uri("rtsp://192.168.1.194:554/11")));
+			libVLC = new LibVLC(new string[] { "--video-filter=transform", "--transform-type=hflip", "--ipv4-timeout=500" });
+			mediaPlayer = new MediaPlayer(libVLC);
+			mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
+			videoView.MediaPlayer = mediaPlayer;
+
+			mediaPlayer.Play(new Media(libVLC, new Uri("rtsp://192.168.1.194:554/11")));
 			if (Screen.AllScreens.Length > 1)
 			{
 				foreach (Screen s in Screen.AllScreens)
@@ -41,6 +51,13 @@ namespace RVDash
 				}
 			}
 		}
-
+		void Restart()
+		{
+			mediaPlayer.Play(new Media(libVLC, new Uri("rtsp://192.168.1.194:554/11")));
+		}
+		private void MediaPlayer_EncounteredError(object sender, EventArgs e)
+		{
+			Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(Restart));
+		}
 	}
 }
