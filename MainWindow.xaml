@@ -101,7 +101,7 @@
                                         ScaleLabelFontSize="14"
                                         PointerLength="90" 
                                         PointerCapRadius="35" 
-                                        ScaleStartAngle="140" 
+                                        ScaleStartAngle="90" 
                                         ScaleSweepAngle="270"
                                         MinValue="70" 
                                         MaxValue="250" 

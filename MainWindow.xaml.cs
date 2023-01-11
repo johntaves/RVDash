@@ -387,6 +387,7 @@ public partial class MainWindow : Window
                     if (!gotFuel)
                     {
                         lastFuel = m.dt;
+                        gotFuel = true;
                         break;
                     }
 					TimeSpan s = m.dt - lastFuel;
@@ -412,7 +413,13 @@ public partial class MainWindow : Window
 				case 185:  break; // avg fuel
 				case 190: gauges.rpm = (decimal)val / 400; break;
                 //4 byte:
-                case 245: curOdo = BitConverter.ToUInt32((byte[])m.value); if (curOdo > 1000000) curOdo = 0; gauges.miles = (curOdo * .1M).ToString("F1"); break;
+                case 245: curOdo = BitConverter.ToUInt32((byte[])m.value); if (curOdo > 1000000) curOdo = 0; gauges.miles = (curOdo * .1M).ToString("F1");
+                    if (Properties.Settings.Default.MPGMiles == 0 && curOdo > 0)
+                    {
+                        Properties.Settings.Default.MPGGas = 0;
+						Properties.Settings.Default.MPGMiles = curOdo;
+					}
+					break;
 				case 505: gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
