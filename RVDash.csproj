@@ -20,6 +20,7 @@
     <PackageReference Include="LibVLCSharp" Version="3.6.7" />
     <PackageReference Include="LibVLCSharp.WPF" Version="3.6.7" />
     <PackageReference Include="System.IO.Ports" Version="7.0.0" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.18" />
   </ItemGroup>
 
   <ItemGroup>

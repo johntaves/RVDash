@@ -21,7 +21,7 @@ public partial class MainWindow : Window
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
-    private Cameras cams;
+    private Cameras cams = null;
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
@@ -36,8 +36,8 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
-       // cams = new Cameras();
-        //cams.Show();
+        cams = new Cameras();
+        cams.Show();
         savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
@@ -347,7 +347,17 @@ public partial class MainWindow : Window
                 case 121: break; // engine retarder
                 case 164: break; // injection control pressure
                 //2 byte
-                case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
+                case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
+                    if (gauges.transel == "R" && cams == null)
+                    {
+						cams = new Cameras();
+						cams.Show();
+					} else if (gauges.transel != "R" && cams != null)
+                    {
+                        cams.Close();
+                        cams = null;
+                    }
+					break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
 				case 168: { decimal v = (decimal)val * .05M;
                         gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden"; break;
