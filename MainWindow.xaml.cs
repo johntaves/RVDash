@@ -348,11 +348,11 @@ public partial class MainWindow : Window
                 case 164: break; // injection control pressure
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
-                    if (gauges.transel == "R" && cams == null)
+                    if (gauges.transel.StartsWith("R") && cams == null)
                     {
 						cams = new Cameras();
 						cams.Show();
-					} else if (gauges.transel != "R" && cams != null)
+					} else if (!gauges.transel.StartsWith("R") && cams != null)
                     {
                         cams.Close();
                         cams = null;
