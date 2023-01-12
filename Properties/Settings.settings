@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="Tank" Type="System.UInt64" Scope="User">
-      <Value Profile="(Default)">325500000000000</Value>
+      <Value Profile="(Default)">17281105990783</Value>
     </Setting>
     <Setting Name="CurTank" Type="System.UInt64" Scope="User">
-      <Value Profile="(Default)">122062500000000</Value>
+      <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="MPGMiles" Type="System.UInt32" Scope="User">
       <Value Profile="(Default)">0</Value>

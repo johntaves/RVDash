@@ -6,8 +6,6 @@
         xmlns:local="clr-namespace:RVDash"
         xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
         mc:Ignorable="d"
-        Title="Cameras" Height="450" Width="800">
-    <Grid>
+        Title="Cameras" Height="640" Width="1080">
     <wpf:VideoView x:Name="videoView"/>
-  </Grid>
 </Window>

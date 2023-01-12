@@ -25,7 +25,7 @@ namespace RVDash.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("325500000000000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("17281105990783")]
         public ulong Tank {
             get {
                 return ((ulong)(this["Tank"]));
@@ -37,7 +37,7 @@ namespace RVDash.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("122062500000000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public ulong CurTank {
             get {
                 return ((ulong)(this["CurTank"]));

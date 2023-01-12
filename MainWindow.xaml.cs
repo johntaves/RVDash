@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using System.Collections;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
+using LibVLCSharp.Shared;
 
 namespace RVDash;
 
@@ -27,16 +27,20 @@ public partial class MainWindow : Window
     private bool showVolts = false;
     private double curSpeed=0;
 	private SerRead capt1 = null, capt2 = null;
+    private LibVLC libVLC=null;
     private bool Ign = false;
     public MainWindow()
     {
-        InitializeComponent();
+		InitializeComponent();
+		Core.Initialize();
+
+		libVLC = new LibVLC(new string[] { "--video-filter=transform", "--transform-type=hflip", "--ipv4-timeout=500" });
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
-        savedTank = Properties.Settings.Default.CurTank;
+		savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
 	{
@@ -108,7 +112,11 @@ public partial class MainWindow : Window
 	}
 	void Window_Closed(object sender, System.EventArgs e)
     {
-        done = true;
+        if (cams != null)
+            cams.Close();
+		if (libVLC != null)
+			libVLC.Dispose();
+		done = true;
         mlw.Close();
     }
     private void readADC(object port)
@@ -277,7 +285,7 @@ public partial class MainWindow : Window
                 openWithButton = true;
             else if (!isR)
                 return;
-			cams = new Cameras(Camera_Closed);
+            cams = new Cameras(libVLC, Camera_Closed);
 			cams.Show();
 		}
 		else
@@ -287,7 +295,7 @@ public partial class MainWindow : Window
             if (fromButton || isR)
                 cams.Activate();
             if (!openWithButton && !fromButton && !isR)
-    			cams.Close();
+                cams.Close();
 		}
 	}
 	private void Camera_MouseDown(object sender, MouseButtonEventArgs e)
