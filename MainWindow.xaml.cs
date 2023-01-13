@@ -11,13 +11,17 @@ using System.Collections;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
 using LibVLCSharp.Shared;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
+using System.Text;
 
 namespace RVDash;
 
 public partial class MainWindow : Window
 {
     protected Gauges gauges = new();
-    private Queue<Msg> queue = new Queue<Msg>();
+    private BlockingCollection<Msg> queue = new();
+    private BlockingCollection<Err> errQueue = new();
     public static int OOWCnt = 0;
     private bool done = false;
     private MsgListWindow mlw;
@@ -25,8 +29,6 @@ public partial class MainWindow : Window
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
-    private double curSpeed=0;
-	private SerRead capt1 = null, capt2 = null;
     private LibVLC libVLC=null;
     private bool Ign = false;
     public MainWindow()
@@ -35,6 +37,7 @@ public partial class MainWindow : Window
 		Core.Initialize();
 
 		libVLC = new LibVLC(new string[] { "--video-filter=transform", "--transform-type=hflip", "--ipv4-timeout=500" });
+        Task.Factory.StartNew(DumpErrs, TaskCreationOptions.LongRunning);
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
         this.Closed += Window_Closed;
@@ -44,9 +47,7 @@ public partial class MainWindow : Window
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
 	{
-		Thread tECU = new Thread(readLoop);
-		Thread tVDC = new Thread(readLoop);
-		Thread tADC = new Thread(readADC);
+        SerRead sECU = null,sVDC= null;
 		//Set the current value of the gauges
 		this.DataContext = gauges;
         CheckScreen();
@@ -54,27 +55,29 @@ public partial class MainWindow : Window
 		{
 			if (true)
 			{
-				tECU.Start(new SerRead('E',10));
-				tVDC.Start(new SerRead('I',6));
+				sECU = new SerRead('E',10);
+                sVDC = new SerRead('I',6);
 			}
 			else if (false)
 			{
-				tECU.Start(capt1 = new SerRead('E', 10, 70000, "binE.dat"));
-				tVDC.Start(capt2 = new SerRead('I', 6, 70000, "binV.dat"));
+                sECU = new SerRead('E', 10, 70000, "binE.dat");
+                sVDC = new SerRead('I', 6, 70000, "binV.dat");
 			}
 			else
 			{
-				tECU.Start(capt1 = new SerRead('E', "binE.dat"));
-				tVDC.Start(capt2 = new SerRead('I', "binV.dat"));
+                sECU = new SerRead('E', "binE.dat");
+                sVDC = new SerRead('I', "binV.dat");
 			}
-			tADC.Start(8);
-		}
-		else
+            Task.Factory.StartNew(() => readADC(8), TaskCreationOptions.LongRunning);
+        }
+        else
 		{
-			tECU.Start(capt1 = new SerRead('E', "binE.dat"));
-			//tVDC.Start(capt2 = new SerRead('I',6, 10000, "binV2.dat"));
+            sECU = new SerRead('E', "binE.dat");
+			//sVDC = new SerRead('I',6, 10000, "binV2.dat");
 		}
-		gauges.showcapt = capt1 != null ? "Visible" : "Hidden";
+        Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
+        if (sVDC != null)
+            Task.Factory.StartNew(() => readLoop(sVDC), TaskCreationOptions.LongRunning);
         updateFuel();
 	}
 	void Window_DBLClick(object sender, RoutedEventArgs e)
@@ -87,6 +90,17 @@ public partial class MainWindow : Window
 		else
             CheckScreen();
 	}
+    private void DumpErrs()
+    {
+        using (StreamWriter sw = new StreamWriter(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", "Err.txt"),true))
+        {
+            while (!done)
+            {
+                var e = errQueue.Take();
+                sw.WriteLine(string.Format("{0} {1}: {2} {3}",e.source,e.position,e.message,String.Join(',',e.data)));
+            }
+        }
+    }
 	void CheckScreen()
     {
 		if (Screen.AllScreens.Length > 1)
@@ -148,11 +162,11 @@ public partial class MainWindow : Window
                     decimal Vs = dval * 1094M / 100M;
                     Ign = Vs > 5;
 					if (Vr > 0 && Vs > 5 && Vs > Vr)
-                        lock (queue) queue.Enqueue(new Msg('A',140, 510, Vs / Vr));
+                        queue.Add(new Msg('A',140, 510, Vs / Vr));
                     continue;
                 }
 				Msg m = new Msg('A', 127, pid, Convert.ToUInt16(dval * 1000M));
-                lock (queue) queue.Enqueue(m);
+                queue.Add(m);
                 Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
             }
             catch { }
@@ -181,6 +195,7 @@ public partial class MainWindow : Window
             object value = 0;
             int packetLen = 0;
             List<Msg> toSend = new List<Msg>();
+            bool in255 = false;
 
             while (!outOfWhack)
             {
@@ -192,11 +207,20 @@ public partial class MainWindow : Window
                 UInt16 pid = (UInt16)rPid;
                 if (rPid == 255)
                 {
+                    if (packetLen > 1)
+                    {
+
+                        errQueue.Add(new Err(serialPort, "255 > 1"));
+                        outOfWhack = true;
+                        break;
+                    }
+                    in255 = true;
                     rPid = serialPort.getNext(ref done);
                     sum += rPid;
-                    pid = (UInt16)(rPid + 256);
                     packetLen++;
                 }
+                if (in255)
+                    pid = (UInt16)(rPid + 256);
                 if (rPid < 128)
                 {
                     byte b = serialPort.getNext(ref done);
@@ -226,11 +250,17 @@ public partial class MainWindow : Window
                     }
                     packetLen += len;
                 }
-                else // 254, 510, 511
+                else
+                { // 254, 510, 511
+                    errQueue.Add(new Err(serialPort, "254, 510, 511"));
                     outOfWhack = true;
+                }
                 if (packetLen > 21)
+                {
+                    errQueue.Add(new Err(serialPort, "254, 510, 511"));
                     outOfWhack = true;
-				toSend.Add(new Msg(serialPort.name,MID, pid, value));
+                }
+                toSend.Add(new Msg(serialPort.source,serialPort.position,MID, pid, value));
             }
             if (!outOfWhack)
                 foreach (Msg m in toSend)
@@ -242,7 +272,7 @@ public partial class MainWindow : Window
                     if (!msgs.ContainsKey(m.Code) || true || ((DateTime.Now - msgs[m.Code]).Milliseconds > 50))
                     {
                         msgs[m.Code] = DateTime.Now;
-                        lock (queue) queue.Enqueue(m);
+                        queue.Add(m);
                         Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
                     }
                 }
@@ -341,24 +371,15 @@ public partial class MainWindow : Window
 	private bool gotFuel = false;
 	public void DoUIChange()
     {
-        while (true)
+        while (queue.Count > 0)
         {
-            Msg m = null;
-            lock (queue)
-            {
-                if (queue.Count == 0)
-                    return;
-                m = queue.Dequeue();
-            }
+            Msg m = queue.Take();
+
             gauges.errs = OOWCnt;
             int val = 0;
             Type t = m.value.GetType();
             if (t == typeof(byte) || t == typeof(UInt16))
                 val = Convert.ToInt32(m.value);
-            if (capt1 != null)
-                gauges.captpos1 = capt1.CaptPos();
-            if (capt2 != null)
-                gauges.captpos2 = capt2.CaptPos();
             gauges.lowwater = "Hidden";
             //mlw.AddToList(m);
             switch (m.pid)
@@ -368,7 +389,7 @@ public partial class MainWindow : Window
                 case 47: gauges.retarder = (val & 0x3) > 0 ? "Visible" : "Hidden"; break;
                 case 49: gauges.abs = (val & 0x3f) > 0 ? "Visible" : "Hidden"; break;
                 // case 70: gauges.brake = (val & 0x80) > 0 ? "Red" : "DarkGray"; break;
-                case 84: gauges.speed = val / 2; curSpeed = (double)val / 2; break;
+                case 84: gauges.speed = val / 2; break;
                 case 85: gauges.cruise = (val & 0x1) > 0 ? "Visible" : "Hidden"; gauges.cruiseact = (val & 0x80) != 0 ? "Visible" : "Hidden"; break;
                 case 86: gauges.setspeed = val / 2; break;
                 case 92: break; // pct engine load
@@ -458,22 +479,23 @@ public class SerRead
 {
     private SerialPort sp = null;
     private Dat d;
-    public char name;
-    byte readPos = 0, writePos = 0;
+    public char source;
+    public ulong position;
+    byte readPos = 0, writePos = 0, markReadPos = 0;
     byte[] data = new byte[256];
     public SerRead(char n,int port)
     {
-        name = n;
+        source = n;
         OpenPort(port);
     }
     public SerRead(char n, string fn)
     {
-		name = n;
+        source = n;
 		d = new Dat(fn);
     }
     public SerRead(char n, int port, int size, string fn)
     {
-		name = n;
+        source = n;
 		d = new Dat(size, fn);
         OpenPort(port);
     }
@@ -484,9 +506,7 @@ public class SerRead
         sp.BaudRate = 9600;
         sp.ReadTimeout = 1000;
         sp.Open();
-    }
-	public int CaptPos() => d.CaptPos();
-    
+    }    
     public void pause()
     {
         d.pause = true;
@@ -507,12 +527,12 @@ public class SerRead
     private void Read(ref bool done)
     {
         int amt;
-        if (readPos <= writePos)
+        if (markReadPos <= writePos)
         {
             amt = 256 - writePos;
-            if (readPos == 0) amt--;
+            if (markReadPos == 0) amt--;
         }
-        else amt = readPos - writePos - 1;
+        else amt = markReadPos - writePos - 1;
         if (amt > 25) amt = 25;
         int len=0;
         if (sp != null)
@@ -533,6 +553,7 @@ public class SerRead
             len = d.read(data, writePos, amt);
             done = len == 0;
         }
+        position += (ulong)len;
         writePos += (byte)len;
     }
     public byte getNext(ref bool done)
@@ -542,10 +563,21 @@ public class SerRead
         if (done) return 0;
         return data[readPos++];
     }
-    private byte markReadPos;
     public void Mark()
     {
         markReadPos = readPos;
+    }
+    public void GetRewindBytes(out byte[] bytes,out ulong pos)
+    {
+        int len = 0;
+        if (markReadPos <= writePos)
+            len = writePos - markReadPos;
+        else len = 256 - markReadPos + writePos;
+        bytes = new byte[len];
+        int i = 0;
+        for (byte r = markReadPos; r != writePos; r++)
+            bytes[i++] = data[r];
+        pos = position - (ulong)len;
     }
     public void Rewind()
     {
@@ -559,6 +591,19 @@ public class SerRead
         return ret;
     }
 }
+public class Err
+{
+    public char source;
+    public string message;
+    public ulong position;
+    public byte[] data;
+    public Err(SerRead sp,string message)
+    {
+        this.source = sp.source;
+        sp.GetRewindBytes(out data, out position);
+        this.message = message;
+    }
+}
 public class Msg
 {
     public byte mid;
@@ -566,13 +611,23 @@ public class Msg
     public object value;
     public int cnt=1;
     public char source;
+    public ulong pos;
     public DateTime dt = DateTime.Now;
-    public Msg(char n,byte m, UInt16 p, object v)
+    public Msg(char source, byte mid, UInt16 pid, object value)
     {
-        source = n;
-        mid = m;
-        pid = p;
-        value = v;
+        this.source=source;
+        this.mid=mid;
+        this.pid=pid;
+        this.value=value;
+        this.pos = 0L;
+    }
+    public Msg(char source,ulong pos,byte mid, UInt16 pid, object value)
+    {
+        this.source = source;
+        this.mid = mid;
+        this.pid = pid;
+        this.value = value;
+        this.pos= pos;
     }
     public override bool Equals(object obj)
     {
@@ -670,30 +725,6 @@ public class Gauges : INotifyPropertyChanged
 		set
 		{
 			SetField(ref _idiotlight, value, "idiotlight");
-		}
-	}
-	private int _captpos1;
-	public int captpos1
-	{
-		get
-		{
-			return _captpos1;
-		}
-		set
-		{
-			SetField(ref _captpos1, value, "captpos1");
-		}
-	}
-	private int _captpos2;
-	public int captpos2
-	{
-		get
-		{
-			return _captpos2;
-		}
-		set
-		{
-			SetField(ref _captpos2, value, "captpos2");
 		}
 	}
 	private int _speed;
@@ -936,18 +967,6 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _brake, value, "brake");
         }
     }
-	private string _showcapt;
-	public string showcapt
-	{
-		get
-		{
-			return _showcapt;
-		}
-		set
-		{
-			SetField(ref _showcapt, value, "showcapt");
-		}
-	}
 	private string _cruise;
 	public string cruise
 	{
@@ -1239,7 +1258,6 @@ public class Dat
 		buf = new byte[size];
 		ms = new int[size];
 	}
-    public int CaptPos() => cur;
     public void add(byte b)
     {
         if (cur == 0)

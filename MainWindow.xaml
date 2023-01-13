@@ -91,8 +91,6 @@
       </StackPanel>
     </Border>
     <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="0" Canvas.Top="900" FontSize="40" />
-    <TextBlock Text="{Binding captpos1}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="950" FontSize="40"  />
-    <TextBlock Text="{Binding captpos2}" Visibility="{Binding showcapt}" Width="200" Canvas.Left="0" Canvas.Top="1000" FontSize="40"  />
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
