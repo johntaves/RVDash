@@ -3,17 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Ports;
-using System.Threading;
 using System.Windows;
-using System.Windows.Threading;
 using System.Windows.Forms;
-using System.Collections;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
 using LibVLCSharp.Shared;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
-using System.Text;
+using System.Windows.Threading;
+using System.Threading;
 
 namespace RVDash;
 
@@ -47,7 +45,7 @@ public partial class MainWindow : Window
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
 	{
-        SerRead sECU = null,sVDC= null;
+		SerRead sECU = null,sVDC= null;
 		//Set the current value of the gauges
 		this.DataContext = gauges;
         CheckScreen();
@@ -55,20 +53,20 @@ public partial class MainWindow : Window
 		{
 			if (true)
 			{
-				sECU = new SerRead('E',10);
+				sECU = new SerRead('E',5);
                 sVDC = new SerRead('I',6);
 			}
 			else if (false)
 			{
-                sECU = new SerRead('E', 10, 70000, "binE.dat");
-                sVDC = new SerRead('I', 6, 70000, "binV.dat");
+                sECU = new SerRead('E', 2, 70000, "binE.dat");
+                sVDC = new SerRead('I', 3, 70000, "binV.dat");
 			}
 			else
 			{
                 sECU = new SerRead('E', "binE.dat");
                 sVDC = new SerRead('I', "binV.dat");
 			}
-            Task.Factory.StartNew(() => readADC(8), TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(() => readADC(2), TaskCreationOptions.LongRunning);
         }
         else
 		{
@@ -92,12 +90,12 @@ public partial class MainWindow : Window
 	}
     private void DumpErrs()
     {
-        using (StreamWriter sw = new StreamWriter(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", "Err.txt"),true))
+        using (StreamWriter sw = new StreamWriter(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", "Err.txt")))
         {
             while (!done)
             {
                 var e = errQueue.Take();
-                sw.WriteLine(string.Format("{0} {1}: {2} {3}",e.source,e.position,e.message,String.Join(',',e.data)));
+                sw.WriteLine(string.Format("{0} {1} {2}: {3} {4}",e.source,e.position,e.badPos,e.message,String.Join(',',e.data)));
             }
         }
     }
@@ -250,14 +248,14 @@ public partial class MainWindow : Window
                     }
                     packetLen += len;
                 }
-                else
+                else if (rPid == 254)
                 { // 254, 510, 511
                     errQueue.Add(new Err(serialPort, "254, 510, 511"));
                     outOfWhack = true;
                 }
                 if (packetLen > 21)
                 {
-                    errQueue.Add(new Err(serialPort, "254, 510, 511"));
+                    errQueue.Add(new Err(serialPort, string.Format("Too Long ({0})",packetLen)));
                     outOfWhack = true;
                 }
                 toSend.Add(new Msg(serialPort.source,serialPort.position,MID, pid, value));
@@ -567,16 +565,20 @@ public class SerRead
     {
         markReadPos = readPos;
     }
-    public void GetRewindBytes(out byte[] bytes,out ulong pos)
+    public void GetRewindBytes(out byte[] bytes,out ulong pos,out int rpos)
     {
         int len = 0;
+        rpos = 0;
         if (markReadPos <= writePos)
             len = writePos - markReadPos;
         else len = 256 - markReadPos + writePos;
         bytes = new byte[len];
         int i = 0;
         for (byte r = markReadPos; r != writePos; r++)
+        {
             bytes[i++] = data[r];
+            if (r == readPos) rpos = i;
+        }
         pos = position - (ulong)len;
     }
     public void Rewind()
@@ -596,11 +598,12 @@ public class Err
     public char source;
     public string message;
     public ulong position;
+    public int badPos;
     public byte[] data;
     public Err(SerRead sp,string message)
     {
         this.source = sp.source;
-        sp.GetRewindBytes(out data, out position);
+        sp.GetRewindBytes(out data, out position, out badPos);
         this.message = message;
     }
 }
