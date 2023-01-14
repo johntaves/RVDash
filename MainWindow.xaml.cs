@@ -401,6 +401,7 @@ public partial class MainWindow : Window
                 case 117: gauges.airPrim = val * 3 / 5; gauges.lowairprim = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 121: break; // engine retarder
+                case 130: break; // power specific fuel economy
                 case 164: break; // injection control pressure
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
@@ -434,13 +435,14 @@ public partial class MainWindow : Window
                         Properties.Settings.Default.Save();
                         savedTank = Properties.Settings.Default.CurTank;
                     }
-					mlw.AddToList(new Msg('C', 127, 604, Properties.Settings.Default.CurTank));
 					updateFuel();
                     break; // fuel rate (4.34 x 10-6gal/s or 1/64 gal/h)
                 case 184: gauges.instfuel = ((decimal)val / 256M).ToString("F1"); break;
 				case 185:  break; // avg fuel
 				case 190: gauges.rpm = (decimal)val / 400; break;
+                case 199: break; // traction control disable state
                 //4 byte:
+                case 225: break; // reserved for text message
                 case 245: curOdo = BitConverter.ToUInt32((byte[])m.value); if (curOdo > 1000000) curOdo = 0; gauges.miles = (curOdo * .1M).ToString("F1");
                     if (Properties.Settings.Default.MPGMiles == 0 && curOdo > 0)
                     {
