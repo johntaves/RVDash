@@ -133,7 +133,6 @@ public partial class MainWindow : Window
     }
     private void readADC(object port)
     {
-        NativeMethods.PreventSleep();
         SerialPort sp = new SerialPort();
         sp.BaudRate = 115200;
         sp.PortName = string.Format("COM{0}",port);
@@ -158,6 +157,9 @@ public partial class MainWindow : Window
                 if (pid == 509)
                 {
                     decimal Vs = dval * 1094M / 100M;
+                    if (!Ign && Vs > 5)
+                        NativeMethods.PreventSleep();
+                    else if (Ign && Vs < 5) NativeMethods.AllowSleep();
                     Ign = Vs > 5;
 					if (Vr > 0 && Vs > 5 && Vs > Vr)
                         queue.Add(new Msg('A',140, 510, Vs / Vr));
@@ -172,7 +174,6 @@ public partial class MainWindow : Window
 	}
     private void readLoop(object sr)
     {
-        NativeMethods.PreventSleep();
         SerRead serialPort = (SerRead)sr;
         bool outOfWhack = false;
         Dictionary<string,DateTime> msgs = new Dictionary<string,DateTime>();
