@@ -442,6 +442,7 @@ public partial class MainWindow : Window
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 121: break; // engine retarder
                 case 130: break; // power specific fuel economy
+                case 136: break; // brake vacuum
                 case 164: break; // injection control pressure
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));

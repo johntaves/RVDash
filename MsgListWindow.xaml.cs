@@ -27,7 +27,7 @@ namespace RVDash
         {
             InitializeComponent();
 			this.Loaded += new RoutedEventHandler(Window_Loaded);
-			this.LocationChanged += Window_LocationChanged;
+		//	this.LocationChanged += Window_LocationChanged;
 		}
 		void Window_Loaded(object sender, RoutedEventArgs e)
 		{
