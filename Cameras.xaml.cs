@@ -4,7 +4,6 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Threading;
-using static System.Net.WebRequestMethods;
 
 namespace RVDash
 {
@@ -46,10 +45,11 @@ namespace RVDash
 		{
 			mediaPlayer = new MediaPlayer(libVLC);
 			mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
-//			mediaPlayer.Playing += MediaPlayer_Playing;
+			//			mediaPlayer.Playing += MediaPlayer_Playing;
 			videoView.MediaPlayer = mediaPlayer;
-			media = new Media(libVLC, new Uri("rtsp://192.168.1.194:554/11"));
+			media = new Media(libVLC, new Uri("rtsp://192.168.1.194:554/12"));
 			mediaPlayer.Play(media);
+			mediaPlayer.Media.AddOption(":network-caching=0");
 			if (Screen.AllScreens.Length > 1)
 			{
 				foreach (Screen s in Screen.AllScreens)

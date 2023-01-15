@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Threading;
+using System.Diagnostics.Eventing.Reader;
 
 namespace RVDash;
 
@@ -58,13 +59,13 @@ public partial class MainWindow : Window
 			}
 			else if (false)
 			{
-                sECU = new SerRead('E', 2, 70000, "binE.dat");
-                sVDC = new SerRead('I', 3, 70000, "binV.dat");
+                sECU = new SerRead('E', 5, "binE.dat");
+                sVDC = new SerRead('I', 6, "binV.dat");
 			}
 			else
 			{
-                sECU = new SerRead('E', "binE.dat");
-                sVDC = new SerRead('I', "binV.dat");
+                sECU = new SerRead('E', "binE2.dat");
+              //  sVDC = new SerRead('I', "binV2.dat");
 			}
             Task.Factory.StartNew(() => readADC(2), TaskCreationOptions.LongRunning);
         }
@@ -92,12 +93,27 @@ public partial class MainWindow : Window
     {
         using (StreamWriter sw = new StreamWriter(Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", "Err.txt")))
         {
-            while (!done)
+            sw.AutoFlush = true;
+			while (!done)
             {
                 var e = errQueue.Take();
-                sw.WriteLine(string.Format("{0} {1} {2}: {3} {4}",e.source,e.position,e.badPos,e.message,String.Join(',',e.data)));
-            }
-        }
+				string[] strs = new string[e.data.Length];
+				string[] sums = new string[e.data.Length];
+				byte sum = 0;
+				for (int j = 0; j < e.data.Length; j++)
+				{
+                    byte v = e.data[j];
+					sum += v;
+					sums[j] = sum.ToString("D3");
+					strs[j] = v.ToString("D3");
+				}
+				Console.WriteLine(string.Join(" ", strs));
+				Console.WriteLine(string.Join(" ", sums));
+                sw.WriteLine(string.Format("{0} {1} {2}: {3}", e.source, e.position, e.badPos, e.message));
+				sw.WriteLine(String.Join(' ', strs));
+				sw.WriteLine(String.Join(' ', sums));
+			}
+		}
     }
 	void CheckScreen()
     {
@@ -158,9 +174,16 @@ public partial class MainWindow : Window
                 {
                     decimal Vs = dval * 1094M / 100M;
                     if (!Ign && Vs > 5)
+                    {
                         NativeMethods.PreventSleep();
-                    else if (Ign && Vs < 5) NativeMethods.AllowSleep();
-                    Ign = Vs > 5;
+                        queue.Add(new Msg('A', 127, 1, Ign));
+                    }
+                    else if (Ign && Vs < 5)
+                    {
+                        NativeMethods.AllowSleep();
+						queue.Add(new Msg('A', 127, 1, Ign));
+					}
+					Ign = Vs > 5;
 					if (Vr > 0 && Vs > 5 && Vs > Vr)
                         queue.Add(new Msg('A',140, 510, Vs / Vr));
                     continue;
@@ -181,18 +204,19 @@ public partial class MainWindow : Window
         while (!done) // 1 message, many PID in each loop
         {
             byte MID;
-            if (outOfWhack)
+			if (outOfWhack)
             {
                 OOWCnt++;
+                msgs.Clear();
                 serialPort.Rewind();
                 MID = serialPort.getNextOOW(ref done);
                 outOfWhack = false;
-            }
-            else MID = serialPort.getNext(ref done);
-            serialPort.Mark();
+			}
+			else MID = serialPort.getNext(ref done);
+			serialPort.Mark();
             byte sum = MID;
             object value = 0;
-            int packetLen = 0;
+            int packetLen = 1;
             List<Msg> toSend = new List<Msg>();
             bool in255 = false;
 
@@ -202,8 +226,12 @@ public partial class MainWindow : Window
                 sum += rPid;
                 packetLen++;
                 if (sum == 0)
-                    break;
-                UInt16 pid = (UInt16)rPid;
+                {
+                    byte nextMID = serialPort.peekNext(ref done);
+                    if (nextMID == 128 || nextMID==130 || nextMID == 136 || nextMID == 140)
+					    break;
+				}
+				UInt16 pid = (UInt16)rPid;
                 if (rPid == 255)
                 {
                     if (packetLen > 1)
@@ -239,19 +267,30 @@ public partial class MainWindow : Window
                 else if (rPid < 254)
                 {
                     byte len = serialPort.getNext(ref done);
-                    sum += len;
-                    byte[] buf = new byte[len];
-                    value = buf;
-                    for (int i = 0; i < len; i++)
+                    if (len != 0)
                     {
-                        buf[i] = serialPort.getNext(ref done);
-                        sum += buf[i];
+                        if (len > 21)
+                        {
+                            outOfWhack = true;
+                            errQueue.Add(new Err(serialPort, string.Format("Bad len ({0})", len)));
+                        }
+                        else
+                        {
+                            sum += len;
+                            byte[] buf = new byte[len];
+                            value = buf;
+                            for (int i = 0; i < len; i++)
+                            {
+                                buf[i] = serialPort.getNext(ref done);
+                                sum += buf[i];
+                            }
+                            packetLen += len;
+                        }
                     }
-                    packetLen += len;
                 }
                 else if (rPid == 254)
-                { // 254, 510, 511
-                    errQueue.Add(new Err(serialPort, "254, 510, 511"));
+                {
+                    errQueue.Add(new Err(serialPort, "254"));
                     outOfWhack = true;
                 }
                 if (packetLen > 21)
@@ -383,6 +422,7 @@ public partial class MainWindow : Window
             //mlw.AddToList(m);
             switch (m.pid)
             {
+                case 1: WindowState = Ign ? WindowState.Maximized : WindowState.Minimized; break;
                 case 44: gauges.idiotlight = string.Format("{0}: Pro {1}, Amb {2}, Red {3}",m.MID, ILStr[(val >> 4) & 3], ILStr[(val >> 2) & 3], ILStr[val & 3]); break;
                 case 40: gauges.retardersw = (val & 0x1) > 0 ? "Visible" : "Hidden"; break;
                 case 47: gauges.retarder = (val & 0x3) > 0 ? "Visible" : "Hidden"; break;
@@ -479,7 +519,7 @@ public partial class MainWindow : Window
 public class SerRead
 {
     private SerialPort sp = null;
-    private Dat d;
+    private Dat d=null;
     public char source;
     public ulong position;
     byte readPos = 0, writePos = 0, markReadPos = 0;
@@ -494,10 +534,10 @@ public class SerRead
         source = n;
 		d = new Dat(fn);
     }
-    public SerRead(char n, int port, int size, string fn)
+    public SerRead(char n, int port, string fn)
     {
         source = n;
-		d = new Dat(size, fn);
+		d = new Dat(fn,true);
         OpenPort(port);
     }
     private void OpenPort(int port)
@@ -511,19 +551,6 @@ public class SerRead
     public void pause()
     {
         d.pause = true;
-    }
-    private int ReadCapt(byte[] buf, int offset, int count)
-    {
-        int ret = 0;
-        while (ret < count)
-        {
-            int i = sp.Read(buf, offset, 1);
-            if (i == 1)
-                d.add(buf[offset]);
-            offset += i;
-            ret += i;
-        }
-        return ret;
     }
     private void Read(ref bool done)
     {
@@ -540,11 +567,11 @@ public class SerRead
         {
             try
             {
-                if (d == null)
-                    len = sp.Read(data, writePos, amt);
-                else if (sp != null && d != null)
-                    len = ReadCapt(data, writePos, amt);
-            } catch (IOException)
+                len = sp.Read(data, writePos, amt);
+                if (d != null)
+                    d.add(data, writePos, len);
+            }
+            catch (IOException)
             {
                 len = 0;
             }
@@ -557,12 +584,20 @@ public class SerRead
         position += (ulong)len;
         writePos += (byte)len;
     }
-    public byte getNext(ref bool done)
+    public byte peekNext(ref bool done)
     {
-        while (!done && readPos == writePos)
-            Read(ref done);
-        if (done) return 0;
-        return data[readPos++];
+		while (!done && readPos == writePos)
+			Read(ref done);
+		if (!done) return data[readPos];
+		if (d != null)
+			d.Stop();
+		return 0;
+	}
+	public byte getNext(ref bool done)
+    {
+        byte ret = peekNext(ref done);
+        readPos++;
+        return ret;
     }
     public void Mark()
     {
@@ -572,12 +607,13 @@ public class SerRead
     {
         int len = 0;
         rpos = 0;
-        if (markReadPos <= writePos)
-            len = writePos - markReadPos;
-        else len = 256 - markReadPos + writePos;
+        byte mp = (byte)(markReadPos - 1);
+        if (mp <= writePos)
+            len = writePos - mp;
+        else len = 256 - mp + writePos;
         bytes = new byte[len];
         int i = 0;
-        for (byte r = markReadPos; r != writePos; r++)
+        for (byte r = mp; r != writePos; r++)
         {
             bytes[i++] = data[r];
             if (r == readPos) rpos = i;
@@ -591,7 +627,6 @@ public class SerRead
     public byte getNextOOW(ref bool done)
     {
         byte ret=0;
-        getNext(ref done);
         while (!done && (ret = getNext(ref done)) < 128) ;
         return ret;
     }
@@ -1241,91 +1276,62 @@ public class Gauges : INotifyPropertyChanged
 
 public class Dat
 {
-    private byte[] buf = null;
-    private int[] ms = null;
-    private int cur = 0;
-    private DateTime st;
-    private bool saved = false, go = false;
-    private string fileName;
     private FileStream fs = null;
+    private BlockingCollection<byte[]> writeQueue = new BlockingCollection<byte[]>();
     public bool pause = false;
-    private void setFn(string fn)
+    private string getFn(string fn)
     {
-		fileName = Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", fn);
-	}
+        return Path.Combine(Environment.GetEnvironmentVariable("USERPROFILE"), "Downloads", fn);
+    }
     public Dat(string fn)
     {
-        setFn(fn);
-		load();
-	}
-	public Dat(int size, string fn)
-    {
-        setFn(fn);
-		buf = new byte[size];
-		ms = new int[size];
-	}
-    public void add(byte b)
-    {
-        if (cur == 0)
-            st = DateTime.Now;
-        if (cur == buf.Length)
-        {
-            if (saved) return;
-			Thread s = new Thread(saver);
-			s.Start();
-			saved = true;
-			return;
-        }
-        buf[cur] = b;
-        ms[cur++] = (int)(DateTime.Now - st).TotalMilliseconds;
+        string fileName = getFn(fn);
+        fs = File.Open(fileName, FileMode.Open);
     }
+    private void writer()
+    {
+        while(true)
+        {
+            try
+            {
+                var buf = writeQueue.Take();
+				fs.Write(buf, 0, buf.Length);
+			}
+			catch (InvalidOperationException)
+            {
+                fs.Close();
+                return;
+            }
+        }
+    }
+    public void Stop()
+    {
+        writeQueue.CompleteAdding();
+    }
+    public Dat(string fn, bool saveTime)
+    {
+        fs = File.Open(getFn(fn), FileMode.Create);
+		Task.Factory.StartNew(writer, TaskCreationOptions.LongRunning);
+	}
+	public void add(byte[] data, byte writePos, int len)
+    {
+        var b = new byte[len];
+        Array.Copy(data, writePos, b, 0, len);
+        writeQueue.Add(b);
+    }
+    private DateTime st = DateTime.Now;
+    private int cur = 0;
     public int read(byte[] outbuf, int offset, int count)
     {
-        if ((pause && !go) || cur == buf.Length)
-        {
-            DateTime x = DateTime.Now;
-            Thread.Sleep(1000);
-            st += DateTime.Now - x;
-            return 0;
-        }
-        if (cur == 0)
-            st = DateTime.Now;
-        if (count > (buf.Length - cur))
-            count = buf.Length - cur;
-        System.Buffer.BlockCopy(buf, cur, outbuf, offset, count);
-        var diff = DateTime.Now - st;
-		int mils = ms[cur] - (int)(diff.TotalMilliseconds);
-        cur += count;
-        if (mils > 0)
-            Thread.Sleep(mils);
-
-        return count;
+        int ret = fs.Read(outbuf, offset, count);
+        cur += ret;
+		var diff = DateTime.Now - st;
+		int mils = cur - (int)(diff.TotalMilliseconds * 4);
+		if (mils > 0)
+			Thread.Sleep(mils);
+        
+		return ret;
     }
-
-    public void load()
-    {
-        FileInfo fi = new FileInfo(fileName);
-        int elements = (int)(fi.Length / (sizeof(byte) + sizeof(int)));
-        fs = File.Open(fileName, FileMode.Open);
-        buf = new byte[elements];
-        ms = new int[elements];
-
-        fs.Read(buf, 0, elements);
-        byte[] bytes = new byte[buf.Length * sizeof(int)];
-        fs.Read(bytes, 0, elements * sizeof(int));
-        fs.Close();
-        System.Buffer.BlockCopy(bytes, 0, ms, 0, bytes.Length);
-    }
-    private void saver()
-    {
-		FileStream fs = File.Open(fileName, FileMode.Create);
-		fs.Write(buf, 0, buf.Length);
-		byte[] bytes = new byte[buf.Length * sizeof(int)];
-		System.Buffer.BlockCopy(ms, 0, bytes, 0, bytes.Length);
-
-		fs.Write(bytes, 0, bytes.Length);
-		fs.Close();
-	}
 }
 internal static class NativeMethods
 {
