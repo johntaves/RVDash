@@ -41,7 +41,6 @@ public partial class MainWindow : Window
         this.MouseDoubleClick += Window_DBLClick;
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
-        mlw.Show();
 		savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
