@@ -341,11 +341,11 @@
     <Polygon Points="0,25 50,25 50,0 100,50 50,100 50,75 0,75" Fill="{Binding rightturn}" Canvas.Left="1450" Canvas.Top="520" />
     <StackPanel Visibility="{Binding retardersw}" Orientation="Vertical" Canvas.Left="767" Canvas.Top="65" >
       <Label Content="Ret" FontSize="20" HorizontalAlignment="Center" />
-      <Label  Content="On" FontWeight="Bold" FontSize="30" Visibility="{Binding retarder}" HorizontalAlignment="Center"/>
+      <Label Content="On" FontWeight="Bold" FontSize="30" Visibility="{Binding retarder}" HorizontalAlignment="Center"/>
     </StackPanel>
     <StackPanel Orientation="Horizontal" Canvas.Left="500" Canvas.Top="640">
       <Label Content="Coolant" Style="{StaticResource Err}" Visibility="{Binding lowwater}" />
-      <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" />
+      <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" MouseDown="PID_MouseDown"  />
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
     </StackPanel>
     <Ellipse Height="32" Width="50" Fill="{Binding drawers}" Canvas.Left="1600" Canvas.Top="854" HorizontalAlignment="Left" VerticalAlignment="Top"/>

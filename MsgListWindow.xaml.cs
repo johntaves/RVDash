@@ -1,19 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace RVDash
 {
@@ -51,7 +40,21 @@ namespace RVDash
 				}
 			}
 		}
-        public int Count() => MsgList.Count;
+		private void Row_Click(object sender, RoutedEventArgs e)
+		{
+			var msg = (Msg)((System.Windows.Controls.Button)sender).DataContext;
+			msg.cnts = !msg.cnts;
+		}
+		public bool ShowErr
+		{
+			get
+			{
+				foreach (Msg m in MsgList)
+					if (m.cnts)
+						return true;
+				return false;
+			}
+		}
 		public void AddToList(Msg m)
 		{
 			var i = MsgList.IndexOf(m);

@@ -10,6 +10,13 @@
                  ItemsSource="{Binding MsgList}" Canvas.Left="3" Canvas.Top="3" >
     <ListView.View>
       <GridView x:Name="grdNames">
+        <GridViewColumn Header="X">
+          <GridViewColumn.CellTemplate>
+          <DataTemplate>
+            <Button Click="Row_Click">X</Button>
+          </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
         <GridViewColumn Header="Position__________" DisplayMemberBinding="{Binding Pos}"/>
         <GridViewColumn Header="####" DisplayMemberBinding="{Binding Cnt}"/>
         <GridViewColumn Header="C" DisplayMemberBinding="{Binding Src}"/>

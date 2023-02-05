@@ -42,6 +42,8 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
+		Msg xm = new Msg('t', 1, 1, 1);
+		mlw.AddToList(xm);
 		savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
@@ -325,15 +327,18 @@ public partial class MainWindow : Window
 	private static HashSet<int> RemMIDs =>
 	new HashSet<int>()
 		{ 190,199,225,226 };
-	private static HashSet<int> okPIDs =>
-        new HashSet<int>() { 199, 225 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
-
-    private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
-        else gauges.showmpg = "Hidden";
-    }
+	private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
+	{
+		if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
+		else gauges.showmpg = "Hidden";
+	}
+	private void PID_MouseDown(object sender, MouseButtonEventArgs e)
+	{
+        if (mlw.Visibility == Visibility.Visible)
+            mlw.Hide();
+        else mlw.Show();
+	}
 	private void AvgMPG_MouseDown(object sender, MouseButtonEventArgs e)
 	{
 		Properties.Settings.Default.MPGGas = 0;
@@ -355,6 +360,7 @@ public partial class MainWindow : Window
                 return;
             cams = new Cameras(libVLC, Camera_Closed);
 			cams.Show();
+			cams.Activate();
 		}
 		else
 		{
@@ -510,10 +516,15 @@ public partial class MainWindow : Window
                     break;
 				default:
                     mlw.AddToList(m);
-                    if (!okPIDs.Contains(m.pid))
-						gauges.msgs = "Visible";
 					break;
             }
+        }
+        if (!gauges.msgs.Equals("Visible") && mlw.ShowErr)
+            gauges.msgs = "Visible";
+        else if (gauges.msgs.Equals("Visible") && !mlw.ShowErr)
+        {
+            gauges.msgs = "Hidden";
+            mlw.Hide();
         }
     }
 }
@@ -654,6 +665,7 @@ public class Msg
     public int cnt=1;
     public char source;
     public ulong pos;
+    public bool cnts = true;
     public DateTime dt = DateTime.Now;
     public Msg(char source, byte mid, UInt16 pid, object value)
     {
@@ -685,6 +697,7 @@ public class Msg
         if (pid > other.pid) return false;
         return true;
     }
+    public string Cnts => cnts ? "N" : "O";
     public string Code => string.Format("{0} {1}", mid, pid);
     public string MID
     {
