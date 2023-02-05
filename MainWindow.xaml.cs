@@ -42,8 +42,6 @@ public partial class MainWindow : Window
         this.Closed += Window_Closed;
 		mlw = new MsgListWindow();
         mlw.Show();
-		Msg xm = new Msg('t', 1, 1, 1);
-		mlw.AddToList(xm);
 		savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
