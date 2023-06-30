@@ -347,6 +347,7 @@
       <Label Content="Coolant" Style="{StaticResource Err}" Visibility="{Binding lowwater}" />
       <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" MouseDown="PID_MouseDown"  />
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
+      <Label Content="Drawers" Style="{StaticResource Err}" Visibility="{Binding drawers}" />
     </StackPanel>
     <Ellipse Height="32" Width="50" Fill="{Binding drawers}" Canvas.Left="1600" Canvas.Top="854" HorizontalAlignment="Left" VerticalAlignment="Top"/>
     <Image MouseDown="Camera_MouseDown" Canvas.Left="1472" Canvas.Top="19" Width="100">
