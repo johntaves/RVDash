@@ -16,8 +16,15 @@ namespace RVDash
         {
             InitializeComponent();
 			this.Loaded += new RoutedEventHandler(Window_Loaded);
-		//	this.LocationChanged += Window_LocationChanged;
+			this.Closing += new System.ComponentModel.CancelEventHandler(MyWindow_Closing);
 		}
+
+		void MyWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			Hide();
+			e.Cancel = true;
+		}
+		//	this.LocationChanged += Window_LocationChanged;
 		void Window_Loaded(object sender, RoutedEventArgs e)
 		{
 			//Set the current value of the gauges

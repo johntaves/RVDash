@@ -497,8 +497,9 @@ public partial class MainWindow : Window
 				case 505: gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
-                case 508: gauges.drawers = val < 400 && Ign ? "Red" : "Black"; break;
-                case 510:
+			//	case 508: gauges.drawers = val < 400 && Ign ? "Red" : "Black"; break;
+				case 508: gauges.drawers = val < 400 && Ign ? "Visible" : "Hidden"; break;
+				case 510:
                     decimal R = 770M / ((decimal)m.value - 1M);
                     decimal p = 129.1573M - (0.980531M * R) + (0.001846232M * R * R); // https://mycurvefit.com/ fit to 240=0, 148=.25, 100=.5, 60=.75, 33=1
                     if (p < 0) p = 0;
