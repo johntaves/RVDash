@@ -410,8 +410,16 @@ public partial class MainWindow : Window
     private uint curOdo=0;
 	private DateTime lastFuel;
 	private bool gotFuel = false;
+    private bool doda = false;
 	public void DoUIChange()
     {
+        if (!doda)
+        {
+			mlw.AddToList(new Msg('H', 136, 128, 4));
+			mlw.AddToList(new Msg('H', 136, 128, 4));
+			mlw.AddToList(new Msg('H', 136, 128, 4));
+			doda = true;
+        }
         while (queue.Count > 0)
         {
             Msg m = queue.Take();
