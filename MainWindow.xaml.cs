@@ -948,6 +948,10 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _miles, value, "miles");
         }
     }
+    public string clock
+    {
+        get { return DateTime.Now.ToString("t"); }
+    }
 	private string _transel;
 	public string transel
 	{
