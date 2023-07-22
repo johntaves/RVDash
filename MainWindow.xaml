@@ -349,7 +349,7 @@
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
       <Label Content="Drawers" Style="{StaticResource Err}" Visibility="{Binding drawers}" />
     </StackPanel>
-    <TextBlock Text="{Binding clock}" MinWidth="100" FontWeight="Bold" FontSize="40" Canvas.Top="44" Canvas.Left="1178" />
+    <TextBlock Text="{Binding clock}" MinWidth="200" TextAlignment="Center" FontWeight="Bold" FontSize="40" Canvas.Top="46" Canvas.Left="1122" />
     <Image MouseDown="Camera_MouseDown" Canvas.Left="1472" Canvas.Top="19" Width="100">
       <Image.Source>
         <BitmapImage  UriSource="rearview-mirror.png" />
