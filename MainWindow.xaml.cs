@@ -320,7 +320,7 @@ public partial class MainWindow : Window
             { 84,96,100,102,110,117,118,168,177,190,245 };
 	private static HashSet<int> RemPIDs =>
 		new HashSet<int>()
-			{ 0,1,2,3,70,71,83,89,91,92,151,187,191,194,244,500,501,502,503 };
+			{ 0,1,2,3,9,24,70,71,83,89,91,92,128,151,187,191,194,244,500,501,502,503 };
 	private static HashSet<int> RemMIDs =>
 	new HashSet<int>()
 		{ 190,199,225,226 };
