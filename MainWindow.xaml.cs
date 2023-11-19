@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Threading;
 using System.Diagnostics.Eventing.Reader;
+using System.Timers;
 
 namespace RVDash;
 
@@ -73,10 +74,19 @@ public partial class MainWindow : Window
             sECU = new SerRead('E', "binE.dat");
 			//sVDC = new SerRead('I',6, 10000, "binV2.dat");
 		}
-        Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
+		System.Timers.Timer aTimer = new System.Timers.Timer();
+		aTimer.Elapsed += new ElapsedEventHandler(OnMinute);
+		aTimer.Interval = 500;
+		aTimer.Enabled = true;
+
+		Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
         if (sVDC != null)
             Task.Factory.StartNew(() => readLoop(sVDC), TaskCreationOptions.LongRunning);
         updateFuel();
+	}
+	private void OnMinute(object source, ElapsedEventArgs e)
+	{
+        gauges.Tick();
 	}
 	void Window_DBLClick(object sender, RoutedEventArgs e)
 	{
@@ -322,8 +332,8 @@ public partial class MainWindow : Window
 		new HashSet<int>()
 			{ 0,1,2,3,9,24,70,71,83,89,91,92,128,151,187,191,194,244,500,501,502,503 };
 	private static HashSet<int> RemMIDs =>
-	new HashSet<int>()
-		{ 190,199,225,226 };
+	    new HashSet<int>()
+		    { 190,199,225,226 };
     private static string[] ILStr = { "Off", "On", "Err", "NA" };
 	private void MPG_MouseDown(object sender, MouseButtonEventArgs e)
 	{
@@ -341,39 +351,48 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.MPGGas = 0;
 		Properties.Settings.Default.MPGMiles = curOdo;
 	}
-	bool openWithButton = false;
+	bool openedWithButton = false;
 	private void Camera_Closed()
     {
         cams = null;
-        openWithButton = false;
+        openedWithButton = false;
     }
-    private void toggleCamera(bool fromButton,bool isR = false)
+    private void startCamera()
     {
-		if (cams == null)
-		{
-            if (fromButton)
-                openWithButton = true;
-            else if (!isR)
-                return;
-            cams = new Cameras(libVLC, Camera_Closed);
-			cams.Show();
-			cams.Activate();
-		}
-		else
-		{
-            if (fromButton)
-                openWithButton = true;
-            if (fromButton || isR)
-                cams.Activate();
-            if (!openWithButton && !fromButton && !isR)
-                cams.Close();
-		}
+		cams = new Cameras(libVLC, Camera_Closed);
+		cams.Show();
+		cams.Activate();
 	}
+	private void checkCamera()
+    {
+        if (gauges.transel.StartsWith("R"))
+        {
+            if (cams != null)
+                return;
+            startCamera();
+        }
+        else if (cams is null || openedWithButton)
+            return;
+        else cams.Close();
+    }
 	private void Camera_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        toggleCamera(true);
-    }
-    private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
+        if (gauges.transel.StartsWith("R"))
+        {
+            if (cams is null)
+                startCamera();
+			openedWithButton = !openedWithButton;
+		}
+		else if (cams is null)
+        {
+            if (!openedWithButton)
+                startCamera();
+			openedWithButton = !openedWithButton;
+		}
+		else if (openedWithButton)
+            cams.Close();
+	}
+	private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (gauges.showvolts.Equals("Hidden"))
         {
@@ -410,16 +429,8 @@ public partial class MainWindow : Window
     private uint curOdo=0;
 	private DateTime lastFuel;
 	private bool gotFuel = false;
-    private bool doda = false;
 	public void DoUIChange()
     {
-        if (!doda)
-        {
-			mlw.AddToList(new Msg('H', 136, 128, 4));
-			mlw.AddToList(new Msg('H', 136, 128, 4));
-			mlw.AddToList(new Msg('H', 136, 128, 4));
-			doda = true;
-        }
         while (queue.Count > 0)
         {
             Msg m = queue.Take();
@@ -457,7 +468,7 @@ public partial class MainWindow : Window
                 case 164: break; // injection control pressure
                 //2 byte
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
-                    toggleCamera(false, gauges.transel.StartsWith("R"));
+                    checkCamera();
 					break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
 				case 168: { decimal v = (decimal)val * .05M;
@@ -762,9 +773,8 @@ public class Gauges : INotifyPropertyChanged
         OnPropertyChanged(propertyName);
         return true;
     }
-
-    // props
-    private string _volts;
+	// props
+	private string _volts;
     public string volts
     {
         get
@@ -956,7 +966,11 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _miles, value, "miles");
         }
     }
-    public string clock
+    public void Tick()
+    {
+        OnPropertyChanged("clock");
+    }
+	public string clock
     {
         get { return DateTime.Now.ToString("t"); }
     }
