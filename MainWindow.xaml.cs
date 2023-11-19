@@ -149,7 +149,8 @@ public partial class MainWindow : Window
 	}
 	void Window_Closed(object sender, System.EventArgs e)
     {
-        if (cams != null)
+		Properties.Settings.Default.Save();
+		if (cams != null)
             cams.Close();
 		if (libVLC != null)
 			libVLC.Dispose();
