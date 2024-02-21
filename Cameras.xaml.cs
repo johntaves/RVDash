@@ -47,7 +47,7 @@ namespace RVDash
 			mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
 			//			mediaPlayer.Playing += MediaPlayer_Playing;
 			videoView.MediaPlayer = mediaPlayer;
-			media = new Media(libVLC, new Uri("rtsp://192.168.1.194:554/2"));
+			media = new Media(libVLC, new Uri("rtsp://ipcam:554/2"));
 			mediaPlayer.Play(media);
 //			mediaPlayer.Media.AddOption(":network-caching=0");
 			if (Screen.AllScreens.Length > 1)
