@@ -24,7 +24,6 @@ public partial class MainWindow : Window
     private BlockingCollection<Err> errQueue = new();
     public static int OOWCnt = 0;
     private bool done = false;
-    private MsgListWindow mlw;
     private Cameras cams = null;
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
@@ -41,7 +40,6 @@ public partial class MainWindow : Window
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
         this.Closed += Window_Closed;
-		mlw = new MsgListWindow();
 		savedTank = Properties.Settings.Default.CurTank;
     }
 	void Window_Loaded(object sender, RoutedEventArgs e)
@@ -155,7 +153,6 @@ public partial class MainWindow : Window
 		if (libVLC != null)
 			libVLC.Dispose();
 		done = true;
-        mlw.Close();
     }
     private void readADC(object port)
     {
@@ -341,12 +338,6 @@ public partial class MainWindow : Window
 		if (gauges.showmpg.Equals("Hidden")) gauges.showmpg = "Visble";
 		else gauges.showmpg = "Hidden";
 	}
-	private void PID_MouseDown(object sender, MouseButtonEventArgs e)
-	{
-        if (mlw.Visibility == Visibility.Visible)
-            mlw.Hide();
-        else mlw.Show();
-	}
 	private void AvgMPG_MouseDown(object sender, MouseButtonEventArgs e)
 	{
 		Properties.Settings.Default.MPGGas = 0;
@@ -436,13 +427,11 @@ public partial class MainWindow : Window
         {
             Msg m = queue.Take();
 
-            gauges.errs = OOWCnt;
             int val = 0;
             Type t = m.value.GetType();
             if (t == typeof(byte) || t == typeof(UInt16))
                 val = Convert.ToInt32(m.value);
             gauges.lowwater = "Hidden";
-            //mlw.AddToList(m);
             switch (m.pid)
             {
                 case 1: WindowState = Ign ? WindowState.Maximized : WindowState.Minimized; break;
@@ -473,8 +462,11 @@ public partial class MainWindow : Window
 					break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
 				case 168: { decimal v = (decimal)val * .05M;
-                        gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden"; break;
-                    }
+                        gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden";
+                        if (v < 12.6M) gauges.voltsBackground = "Red";
+                        else gauges.voltsBackground = "Black";
+						break;
+					}
                 case 177: gauges.transTemp = val / 4; break;
                 case 183:
                     if (!gotFuel)
@@ -533,16 +525,8 @@ public partial class MainWindow : Window
                     updateFuel();
                     break;
 				default:
-                    mlw.AddToList(m);
 					break;
             }
-        }
-        if (!gauges.msgs.Equals("Visible") && mlw.ShowErr)
-            gauges.msgs = "Visible";
-        else if (gauges.msgs.Equals("Visible") && !mlw.ShowErr)
-        {
-            gauges.msgs = "Hidden";
-            mlw.Hide();
         }
     }
 }
@@ -833,18 +817,6 @@ public class Gauges : INotifyPropertyChanged
         set
         {
             SetField(ref _oil, value, "oil");
-        }
-    }
-    private string _msgs = "Hidden";
-    public string msgs
-    {
-        get
-        {
-            return _msgs;
-        }
-        set
-        {
-            SetField(ref _msgs, value, "msgs");
         }
     }
     private string _hotwater;
@@ -1203,6 +1175,8 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _showmpg, value, "showmpg");
         }
     }
+    private string _voltsBackground = "black";
+    public string voltsBackground { get { return _voltsBackground; } set { SetField(ref _voltsBackground, value, "voltsBackground"); } }
     private string _showvolts = "Hidden";
     public string showvolts
     {
@@ -1299,18 +1273,6 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _inttemp, value, "inttemp");
         }
     }
-	private int _errs;
-	public int errs
-	{
-		get
-		{
-			return _errs;
-		}
-		set
-		{
-			SetField(ref _errs, value, "errs");
-		}
-	}
 }
 
 public class Dat

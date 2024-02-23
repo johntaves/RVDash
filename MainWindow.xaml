@@ -68,7 +68,7 @@
 
     <Border MouseDown="Volts_MouseDown" Canvas.Left="55" Canvas.Top="170" >
       <StackPanel Orientation="Horizontal">
-        <TextBlock Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
+        <TextBlock Background="{Binding voltsBackground}" Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
         <Label Content="V" VerticalAlignment="Bottom" FontSize="30" />
       </StackPanel>
     </Border>
@@ -90,7 +90,6 @@
         <TextBlock Text="{Binding setspeed}" Visibility="{Binding cruiseact}" Width="140" FontSize="100" />
       </StackPanel>
     </Border>
-    <TextBlock Text="{Binding errs}" Width="200" Canvas.Left="0" Canvas.Top="900" FontSize="40" />
     <local:CircularGaugeControl Canvas.Left="640" Canvas.Top="719"
                                         Radius="150" 
                                         ScaleRadius="100" 
@@ -345,7 +344,6 @@
     </StackPanel>
     <StackPanel Orientation="Horizontal" Canvas.Left="500" Canvas.Top="640">
       <Label Content="Coolant" Style="{StaticResource Err}" Visibility="{Binding lowwater}" />
-      <Label Content="PID" Style="{StaticResource Err}" Visibility="{Binding msgs}" MouseDown="PID_MouseDown"  />
       <Label Content="ABS" Style="{StaticResource Err}" Visibility="{Binding abs}" />
       <Label Content="Drawers" Style="{StaticResource Err}" Visibility="{Binding drawers}" />
     </StackPanel>
