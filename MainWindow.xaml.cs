@@ -473,8 +473,11 @@ public partial class MainWindow : Window
 					break;
                 case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
 				case 168: { decimal v = (decimal)val * .05M;
-                        gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden"; break;
-                    }
+                        gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden";
+                        if (v < 12.6M) gauges.voltsBackground = "Red";
+                        else gauges.voltsBackground = "Black";
+						break;
+					}
                 case 177: gauges.transTemp = val / 4; break;
                 case 183:
                     if (!gotFuel)
@@ -1203,6 +1206,8 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _showmpg, value, "showmpg");
         }
     }
+    private string _voltsBackground = "black";
+    public string voltsBackground { get { return _voltsBackground; } set { SetField(ref _voltsBackground, value, "voltsBackground"); } }
     private string _showvolts = "Hidden";
     public string showvolts
     {

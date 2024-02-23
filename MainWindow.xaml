@@ -68,7 +68,7 @@
 
     <Border MouseDown="Volts_MouseDown" Canvas.Left="55" Canvas.Top="170" >
       <StackPanel Orientation="Horizontal">
-        <TextBlock Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
+        <TextBlock Background="{Binding voltsBackground}" Visibility="{Binding showvolts}" Text="{Binding volts}" Width="160" FontSize="80" />
         <Label Content="V" VerticalAlignment="Bottom" FontSize="30" />
       </StackPanel>
     </Border>
