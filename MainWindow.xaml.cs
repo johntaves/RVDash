@@ -948,7 +948,7 @@ public class Gauges : INotifyPropertyChanged
     {
         get { return DateTime.Now.ToString("t"); }
     }
-	private string _transel;
+	private string _transel = "N";
 	public string transel
 	{
 		get
