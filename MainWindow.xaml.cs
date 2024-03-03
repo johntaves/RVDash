@@ -66,20 +66,25 @@ public partial class MainWindow : Window
               //  sVDC = new SerRead('I', "binV2.dat");
 			}
             Task.Factory.StartNew(() => readADC(2), TaskCreationOptions.LongRunning);
-        }
-        else
+			Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
+			if (sVDC != null)
+				Task.Factory.StartNew(() => readLoop(sVDC), TaskCreationOptions.LongRunning);
+		}
+		else
 		{
-            sECU = new SerRead('E', "binE.dat");
-			//sVDC = new SerRead('I',6, 10000, "binV2.dat");
+			/*sECU = new SerRead('E', "binE.dat");
+			sVDC = new SerRead('I',6, 10000, "binV2.dat");
+			Task.Factory.StartNew(() => readADC(2), TaskCreationOptions.LongRunning);
+			Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
+			if (sVDC != null)
+				Task.Factory.StartNew(() => readLoop(sVDC), TaskCreationOptions.LongRunning);
+            */
 		}
 		System.Timers.Timer aTimer = new System.Timers.Timer();
 		aTimer.Elapsed += new ElapsedEventHandler(OnMinute);
 		aTimer.Interval = 500;
 		aTimer.Enabled = true;
 
-		Task.Factory.StartNew(() => readLoop(sECU), TaskCreationOptions.LongRunning);
-        if (sVDC != null)
-            Task.Factory.StartNew(() => readLoop(sVDC), TaskCreationOptions.LongRunning);
         updateFuel();
 	}
 	private void OnMinute(object source, ElapsedEventArgs e)

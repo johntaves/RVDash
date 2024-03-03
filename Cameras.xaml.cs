@@ -47,9 +47,9 @@ namespace RVDash
 			mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
 			//			mediaPlayer.Playing += MediaPlayer_Playing;
 			videoView.MediaPlayer = mediaPlayer;
-			media = new Media(libVLC, new Uri("rtsp://jt:jt@camera:554/"));
+			media = new Media(libVLC, new Uri("rtsp://admin:@192.168.1.146:554/live"));
 			mediaPlayer.Play(media);
-//			mediaPlayer.Media.AddOption(":network-caching=0");
+			mediaPlayer.Media.AddOption(":network-caching=0");
 			if (Screen.AllScreens.Length > 1)
 			{
 				foreach (Screen s in Screen.AllScreens)
