@@ -7,13 +7,13 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Runtime.InteropServices;
-using LibVLCSharp.Shared;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Threading;
 using System.Diagnostics.Eventing.Reader;
 using System.Timers;
+using System.Net.Http;
 
 namespace RVDash;
 
@@ -28,14 +28,12 @@ public partial class MainWindow : Window
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
-    private LibVLC libVLC=null;
     private bool Ign = false;
+    HttpClient client = new HttpClient();
     public MainWindow()
     {
 		InitializeComponent();
-		Core.Initialize();
 
-		libVLC = new LibVLC(new string[] { "--video-filter=transform", "--transform-type=hflip", "--ipv4-timeout=500" });
         Task.Factory.StartNew(DumpErrs, TaskCreationOptions.LongRunning);
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
@@ -155,8 +153,6 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.Save();
 		if (cams != null)
             cams.Close();
-		if (libVLC != null)
-			libVLC.Dispose();
 		done = true;
     }
     private void readADC(object port)
@@ -356,7 +352,7 @@ public partial class MainWindow : Window
     }
     private void startCamera()
     {
-		cams = new Cameras(libVLC, Camera_Closed);
+		cams = new Cameras(client,@"http://192.168.2.201:81/stream", Camera_Closed);
 		cams.Show();
 		cams.Activate();
 	}

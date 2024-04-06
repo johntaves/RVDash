@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RVDash"
-        xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
         mc:Ignorable="d"
-        Title="Cameras" Height="640" Width="1080">
-    <wpf:VideoView x:Name="videoView"/>
+        Title="Camera" Height="640" Width="1080">
+  <Grid>
+    <Image x:Name="theImg"/>
+  </Grid>
 </Window>
