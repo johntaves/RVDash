@@ -29,10 +29,43 @@ namespace RVDash
             InitializeComponent();
             closeIt = cl;
             this.Closed += Cameras_Closed;
+			this.Loaded += Cameras_Loaded;
             GetImages(client,url);
         }
 
-        private void Cameras_Closed(object sender, EventArgs e)
+		private void Cameras_Loaded(object sender, RoutedEventArgs e)
+		{
+            CheckScreen();
+		}
+
+		void CheckScreen()
+		{
+			if (Screen.AllScreens.Length > 1)
+			{
+				foreach (Screen s in Screen.AllScreens)
+				{
+					if (s.Primary)
+					{
+						var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
+										Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
+						this.Left = s.WorkingArea.Left / scaleRatio;
+						this.Top = s.WorkingArea.Top / scaleRatio;
+						this.WindowStyle = WindowStyle.None;
+                        this.Width = Screen.PrimaryScreen.WorkingArea.Width / scaleRatio;
+                        this.Height = 768 / scaleRatio;
+						//this.WindowState = WindowState.Maximized;
+						break;
+					}
+				}
+			}
+			else
+			{
+				this.WindowStyle = WindowStyle.ThreeDBorderWindow;
+				this.WindowState = WindowState.Normal;
+			}
+		}
+
+		private void Cameras_Closed(object sender, EventArgs e)
         {
             go = false;
             closeIt();

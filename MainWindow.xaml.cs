@@ -352,7 +352,7 @@ public partial class MainWindow : Window
     }
     private void startCamera()
     {
-		cams = new Cameras(client,@"http://192.168.2.201:81/stream", Camera_Closed);
+		cams = new Cameras(client,@"http://Camera:81/stream", Camera_Closed);
 		cams.Show();
 		cams.Activate();
 	}
