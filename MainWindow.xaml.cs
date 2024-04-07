@@ -207,21 +207,21 @@ public partial class MainWindow : Window
     {
         SerRead serialPort = (SerRead)sr;
         bool outOfWhack = false;
-        Dictionary<string,DateTime> msgs = new Dictionary<string,DateTime>();
+        Dictionary<string, DateTime> msgs = new Dictionary<string, DateTime>();
 
         while (!done) // 1 message, many PID in each loop
         {
             byte MID;
-			if (outOfWhack)
+            if (outOfWhack)
             {
                 OOWCnt++;
                 msgs.Clear();
                 serialPort.Rewind();
                 MID = serialPort.getNextOOW(ref done);
                 outOfWhack = false;
-			}
-			else MID = serialPort.getNext(ref done);
-			serialPort.Mark();
+            }
+            else MID = serialPort.getNext(ref done);
+            serialPort.Mark();
             byte sum = MID;
             object value = 0;
             int packetLen = 1;
@@ -236,10 +236,10 @@ public partial class MainWindow : Window
                 if (sum == 0)
                 {
                     byte nextMID = serialPort.peekNext(ref done);
-                    if (nextMID == 128 || nextMID==130 || nextMID == 136 || nextMID == 140)
-					    break;
-				}
-				UInt16 pid = (UInt16)rPid;
+                    if (nextMID == 128 || nextMID == 130 || nextMID == 136 || nextMID == 140)
+                        break;
+                }
+                UInt16 pid = (UInt16)rPid;
                 if (rPid == 255)
                 {
                     if (packetLen > 1)
@@ -303,10 +303,10 @@ public partial class MainWindow : Window
                 }
                 if (packetLen > 21)
                 {
-                    errQueue.Add(new Err(serialPort, string.Format("Too Long ({0})",packetLen)));
+                    errQueue.Add(new Err(serialPort, string.Format("Too Long ({0})", packetLen)));
                     outOfWhack = true;
                 }
-                toSend.Add(new Msg(serialPort.source,serialPort.position,MID, pid, value));
+                toSend.Add(new Msg(serialPort.source, serialPort.position, MID, pid, value));
             }
             if (!outOfWhack)
                 foreach (Msg m in toSend)
@@ -322,8 +322,9 @@ public partial class MainWindow : Window
                         Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoUIChange));
                     }
                 }
-		}
-	}
+
+        }
+    }
     private static HashSet<int> InstPIDs =>
         new HashSet<int>()
             { 84,96,100,102,110,117,118,168,177,190,245 };
@@ -561,7 +562,7 @@ public class SerRead
         sp = new SerialPort();
         sp.PortName = string.Format("COM{0}", port);
         sp.BaudRate = 9600;
-        sp.ReadTimeout = 1000;
+//        sp.ReadTimeout = 10000;
         sp.Open();
     }    
     public void pause()
