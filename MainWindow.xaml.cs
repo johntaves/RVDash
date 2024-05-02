@@ -346,7 +346,12 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.MPGMiles = curOdo;
 	}
 	bool openedWithButton = false;
-	private void Camera_Closed() => openedWithButton = false;
+	private void Camera_Closed()
+    {
+		client.CancelPendingRequests();
+		cams = null;
+        openedWithButton = false;
+    }
     private void startCamera()
     {
 		cams = new Cameras(client,@"http://Camera:81/stream", Camera_Closed);
