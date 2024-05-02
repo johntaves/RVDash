@@ -1,10 +1,12 @@
 ﻿using System;
 using System.CodeDom;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,60 +18,59 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace RVDash
 {
-	/// <summary>
-	/// Interaction logic for Cameras.xaml
-	/// </summary>
-	public partial class Cameras : Window
-	{
+    /// <summary>
+    /// Interaction logic for Cameras.xaml
+    /// </summary>
+    public partial class Cameras : Window
+    {
         volatile BitmapFrame? frame = null;
-        Action closeIt;
+        HttpClient client = new();
         volatile bool go = true;
-        public Cameras(HttpClient client, string url,Action cl )
+        string url;
+        Task bg=null;
+        public Cameras(string url)
         {
             InitializeComponent();
-            closeIt = cl;
-            this.Closed += Cameras_Closed;
-			this.Loaded += Cameras_Loaded;
-            GetImages(client,url);
+			this.Closed += Cameras_Closed;
+			this.IsVisibleChanged += Cameras_IsVisibleChanged;
+			client.Timeout = TimeSpan.FromSeconds(2);
+			this.url = url;
         }
-
-		private void Cameras_Loaded(object sender, RoutedEventArgs e)
-		{
-            CheckScreen();
-		}
-
-		void CheckScreen()
-		{
-			if (Screen.AllScreens.Length > 1)
-			{
-				foreach (Screen s in Screen.AllScreens)
-				{
-					if (s.Primary)
-					{
-						var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
-										Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
-						this.Left = s.WorkingArea.Left / scaleRatio;
-						this.Top = s.WorkingArea.Top / scaleRatio;
-						this.WindowStyle = WindowStyle.None;
+        private void Cameras_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (!IsVisible)
+            {
+                go = false;
+                return;
+            }
+            if (Screen.AllScreens.Length > 1)
+            {
+                foreach (Screen s in Screen.AllScreens)
+                {
+                    if (s.Primary)
+                    {
+                        var scaleRatio = Math.Max(Screen.PrimaryScreen.WorkingArea.Width / SystemParameters.PrimaryScreenWidth,
+                                        Screen.PrimaryScreen.WorkingArea.Height / SystemParameters.PrimaryScreenHeight);
+                        this.Left = s.WorkingArea.Left / scaleRatio;
+                        this.Top = s.WorkingArea.Top / scaleRatio;
+                        this.WindowStyle = WindowStyle.None;
                         this.Width = Screen.PrimaryScreen.WorkingArea.Width / scaleRatio;
                         this.Height = 768 / scaleRatio;
-						//this.WindowState = WindowState.Maximized;
-						break;
-					}
-				}
-			}
-			else
-			{
-				this.WindowStyle = WindowStyle.ThreeDBorderWindow;
-				this.WindowState = WindowState.Normal;
-			}
-		}
-
-		private void Cameras_Closed(object sender, EventArgs e)
-        {
-            go = false;
-            closeIt();
+                        //this.WindowState = WindowState.Maximized;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                this.WindowStyle = WindowStyle.ThreeDBorderWindow;
+                this.WindowState = WindowState.Normal;
+            }
+            if (bg != null)
+				bg.Wait();
+			bg = Task.Run(() => GetImages(client, url));
         }
+		private void Cameras_Closed(object sender, EventArgs e) => client.Dispose();
         public void DoImage()
         {
             if (frame is null)
@@ -77,11 +78,14 @@ namespace RVDash
             theImg.Source = frame;
             frame = null;
         }
-        async Task GetImages(HttpClient client,string url)
+        async Task GetImages(HttpClient client, string url)
         {
-            var imageBuffer = new byte[1024 * 1024];
+            go = true;
+			Trace.WriteLine("Starting");
+			var imageBuffer = new byte[1024 * 1024];
             using var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-            if (!resp.IsSuccessStatusCode)
+			Trace.WriteLine("Looping");
+			if (!resp.IsSuccessStatusCode)
                 throw new Exception(resp.StatusCode.ToString());
 
             var ct = resp.Content.Headers.ContentType;
@@ -92,8 +96,10 @@ namespace RVDash
 
             using var st = await resp.Content.ReadAsStreamAsync();
             var mr = new MultipartReader(bb.Value, st);
-            while (go)
+			Trace.WriteLine("going");
+			while (go)
             {
+                Trace.WriteLine("Looping");
                 try
                 {
                     if (!(await mr.ReadNextSectionAsync() is { } section))
@@ -107,8 +113,12 @@ namespace RVDash
                     frame = image.Frames[0];
                     await Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(DoImage));
                 }
-                catch (WebException) { }
+                catch(Exception e)
+                {
+                    Trace.WriteLine(e.Message);
+                }
             }
+            Trace.WriteLine("leaving");
         }
     }
 }

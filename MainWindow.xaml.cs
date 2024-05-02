@@ -24,16 +24,14 @@ public partial class MainWindow : Window
     private BlockingCollection<Err> errQueue = new();
     public static int OOWCnt = 0;
     private bool done = false;
-    private Cameras cams = null;
+    private Cameras cams = new Cameras(@"http://Camera:81/stream");
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
     private bool Ign = false;
-    HttpClient client = new HttpClient();
     public MainWindow()
     {
 		InitializeComponent();
-        client.Timeout = TimeSpan.FromSeconds(2);
         Task.Factory.StartNew(DumpErrs, TaskCreationOptions.LongRunning);
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
@@ -151,8 +149,7 @@ public partial class MainWindow : Window
 	void Window_Closed(object sender, System.EventArgs e)
     {
 		Properties.Settings.Default.Save();
-		if (cams != null)
-            cams.Close();
+        cams.Close();
 		done = true;
     }
     private void readADC(object port)
@@ -346,46 +343,39 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.MPGMiles = curOdo;
 	}
 	bool openedWithButton = false;
-	private void Camera_Closed()
-    {
-		client.CancelPendingRequests();
-		cams = null;
-        openedWithButton = false;
-    }
     private void startCamera()
     {
-		cams = new Cameras(client,@"http://Camera:81/stream", Camera_Closed);
 		cams.Show();
 		cams.Activate();
 	}
 	private void checkCamera()
     {
         if (gauges.transel.StartsWith("R"))
-        {
-            if (cams != null)
-                return;
             startCamera();
-        }
-        else if (cams is null || openedWithButton)
+        else if (!cams.IsVisible || openedWithButton)
             return;
-        else cams.Close();
+        else cams.Hide();
     }
 	private void Camera_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (gauges.transel.StartsWith("R"))
         {
-            if (cams is null)
+            if (!cams.IsVisible)
+            {
                 startCamera();
-			openedWithButton = !openedWithButton;
-		}
-		else if (cams is null)
+                openedWithButton = false;
+            }
+        }
+        else if (!cams.IsVisible)
         {
-            if (!openedWithButton)
-                startCamera();
-			openedWithButton = !openedWithButton;
-		}
-		else if (openedWithButton)
-            cams.Close();
+            startCamera();
+            openedWithButton = true;
+        }
+        else
+        {
+            cams.Hide();
+            openedWithButton = true;
+        }
 	}
 	private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
     {

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RVDash"
         mc:Ignorable="d"
+        WindowStyle ="None"
         Title="Camera" Height="640" Width="1080" Top="0" Left="0">
   <Grid>
     <Image x:Name="theImg"/>
