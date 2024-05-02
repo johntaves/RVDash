@@ -33,7 +33,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
 		InitializeComponent();
-
+        client.Timeout = TimeSpan.FromSeconds(2);
         Task.Factory.StartNew(DumpErrs, TaskCreationOptions.LongRunning);
         this.Loaded += new RoutedEventHandler(Window_Loaded);
         this.MouseDoubleClick += Window_DBLClick;
@@ -346,11 +346,7 @@ public partial class MainWindow : Window
 		Properties.Settings.Default.MPGMiles = curOdo;
 	}
 	bool openedWithButton = false;
-	private void Camera_Closed()
-    {
-        cams = null;
-        openedWithButton = false;
-    }
+	private void Camera_Closed() => openedWithButton = false;
     private void startCamera()
     {
 		cams = new Cameras(client,@"http://Camera:81/stream", Camera_Closed);

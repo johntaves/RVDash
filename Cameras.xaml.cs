@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -20,10 +21,9 @@ namespace RVDash
 	/// </summary>
 	public partial class Cameras : Window
 	{
-        BitmapFrame? frame = null;
+        volatile BitmapFrame? frame = null;
         Action closeIt;
-        object lockObj = new object();
-        bool go = true;
+        volatile bool go = true;
         public Cameras(HttpClient client, string url,Action cl )
         {
             InitializeComponent();
@@ -72,8 +72,10 @@ namespace RVDash
         }
         public void DoImage()
         {
+            if (frame is null)
+                return;
             theImg.Source = frame;
-            lock (lockObj) frame = null;
+            frame = null;
         }
         async Task GetImages(HttpClient client,string url)
         {
@@ -90,30 +92,23 @@ namespace RVDash
 
             using var st = await resp.Content.ReadAsStreamAsync();
             var mr = new MultipartReader(bb.Value, st);
-            while (go && await mr.ReadNextSectionAsync() is { } section)
+            while (go)
             {
-                await using var ms = new MemoryStream();
-                await section.Body.CopyToAsync(ms);
-                bool lockTaken = false;
-
                 try
                 {
-                    Monitor.TryEnter(lockObj, 1, ref lockTaken);
-                    if (lockTaken && frame is null)
-                    { // throws extra frames on the floor
-                        ms.Position = 0;
-                        var image = new JpegBitmapDecoder(ms, BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnLoad);
-                        frame = image.Frames[0];
-                        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(DoImage));
-                    }
+                    if (!(await mr.ReadNextSectionAsync() is { } section))
+                        continue;
+                    if (frame != null) // ignores the frame if UI is not ready for another frame
+                        continue;
+                    await using var ms = new MemoryStream();
+                    await section.Body.CopyToAsync(ms);
+                    ms.Position = 0;
+                    var image = new JpegBitmapDecoder(ms, BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnLoad);
+                    frame = image.Frames[0];
+                    await Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(DoImage));
                 }
-                finally
-                {
-                    // Ensure that the lock is released.
-                    if (lockTaken) Monitor.Exit(lockObj);
-                }
+                catch (WebException) { }
             }
-            throw new Exception("");
         }
     }
 }
