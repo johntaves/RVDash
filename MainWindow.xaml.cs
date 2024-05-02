@@ -348,7 +348,8 @@ public partial class MainWindow : Window
 	bool openedWithButton = false;
 	private void Camera_Closed()
     {
-        cams = null;
+		client.CancelPendingRequests();
+		cams = null;
         openedWithButton = false;
     }
     private void startCamera()
