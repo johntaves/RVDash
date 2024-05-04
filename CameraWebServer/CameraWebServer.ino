@@ -152,7 +152,7 @@ void setup() {
   s->set_framesize(s, FRAMESIZE_XGA);
   
   WiFi.setSleep(false);
-  WiFi.setHostname("Camera");
+  WiFi.setHostname("TestCamera");
   check_wifi();
 
   startCameraServer();

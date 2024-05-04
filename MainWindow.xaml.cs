@@ -374,7 +374,7 @@ public partial class MainWindow : Window
         else
         {
             cams.Hide();
-            openedWithButton = true;
+            openedWithButton = false;
         }
 	}
 	private void Volts_MouseDown(object sender, MouseButtonEventArgs e)
@@ -503,7 +503,6 @@ public partial class MainWindow : Window
 				case 505: gauges.rightturn = val > 400 ? "Green" : "Black"; break;
 				case 506: gauges.leftturn = val > 400 ? "Green" : "Black"; break;
 				case 507: gauges.high = val > 400 ? "Blue" : "Black"; break;
-			//	case 508: gauges.drawers = val < 400 && Ign ? "Red" : "Black"; break;
 				case 508: gauges.drawers = val < 400 && Ign ? "Visible" : "Hidden"; break;
 				case 510:
                     decimal R = 770M / ((decimal)m.value - 1M);
@@ -813,7 +812,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _oil, value, "oil");
         }
     }
-    private string _hotwater;
+    private string _hotwater = "Black";
     public string hotwater
     {
         get
@@ -849,7 +848,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _avgfuel, value, "avgfuel");
 		}
 	}
-	private string _instfuel;
+	private string _instfuel = "0";
 	public string instfuel
 	{
 		get
@@ -861,7 +860,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _instfuel, value, "instfuel");
 		}
 	}
-	private decimal _rpm;
+	private decimal _rpm = 0;
 	public decimal rpm
 	{
 		get
@@ -873,7 +872,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _rpm, value, "rpm");
 		}
 	}
-	private int _airPrim;
+	private int _airPrim = 0;
     public int airPrim
     {
         get
@@ -885,7 +884,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _airPrim, value, "airPrim");
         }
     }
-    private int _airSec;
+    private int _airSec = 0;
     public int airSec
     {
         get
@@ -897,7 +896,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _airSec, value, "airSec");
         }
     }
-    private int _transTemp;
+    private int _transTemp = 0;
     public int transTemp
     {
         get
@@ -909,7 +908,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _transTemp, value, "transTemp");
         }
     }
-    private int _boost;
+    private int _boost = 0;
     public int boost
     {
         get
@@ -921,7 +920,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _boost, value, "boost");
         }
     }
-    private string _miles;
+    private string _miles = "?";
     public string miles
     {
         get
@@ -953,7 +952,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _transel, value, "transel");
 		}
 	}
-	private string _tranattain;
+	private string _tranattain = "0";
 	public string tranattain
 	{
 		get
@@ -965,7 +964,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _tranattain, value, "tranattain");
 		}
 	}
-	private string _retarder;
+	private string _retarder = "Hidden";
 	public string retarder
 	{
 		get
@@ -977,7 +976,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _retarder, value, "retarder");
 		}
 	}
-	private string _retardersw;
+	private string _retardersw = "Hidden";
     public string retardersw
     {
         get
@@ -989,31 +988,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _retardersw, value, "retardersw");
         }
     }
-    private string _wait;
-    public string wait
-    {
-        get
-        {
-            return _wait;
-        }
-        set
-        {
-            SetField(ref _wait, value, "wait");
-        }
-    }
-    private string _brake;
-    public string brake
-    {
-        get
-        {
-            return _brake;
-        }
-        set
-        {
-            SetField(ref _brake, value, "brake");
-        }
-    }
-	private string _cruise;
+	private string _cruise = "Hidden";
 	public string cruise
 	{
 		get
@@ -1025,7 +1000,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _cruise, value, "cruise");
 		}
 	}
-	private string _cruiseact;
+	private string _cruiseact = "Hidden";
 	public string cruiseact
 	{
 		get
@@ -1037,7 +1012,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _cruiseact, value, "cruiseact");
 		}
 	}
-	private string _leftturn;
+	private string _leftturn = "Black";
 	public string leftturn
 	{
 		get
@@ -1049,7 +1024,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _leftturn, value, "leftturn");
 		}
 	}
-	private string _drawers;
+	private string _drawers = "Hidden";
 	public string drawers
 	{
 		get
@@ -1061,7 +1036,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _drawers, value, "drawers");
 		}
 	}
-	private string _high;
+	private string _high = "Black";
 	public string high
 	{
 		get
@@ -1073,7 +1048,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _high, value, "high");
 		}
 	}
-	private string _lowfuel;
+	private string _lowfuel = "Black";
 	public string lowfuel
 	{
 		get
@@ -1085,7 +1060,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowfuel, value, "lowfuel");
 		}
 	}
-	private string _lowinttemp;
+	private string _lowinttemp = "Black";
 	public string lowinttemp
 	{
 		get
@@ -1097,7 +1072,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowinttemp, value, "lowinttemp");
 		}
 	}
-	private string _rightturn;
+	private string _rightturn = "Black";
     public string rightturn
     {
         get
@@ -1109,7 +1084,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _rightturn, value, "rightturn");
         }
     }
-	private string _lowoil;
+	private string _lowoil = "Black";
 	public string lowoil
 	{
 		get
@@ -1121,7 +1096,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowoil, value, "lowoil");
 		}
 	}
-	private string _lowairprim;
+	private string _lowairprim = "Black";
 	public string lowairprim
 	{
 		get
@@ -1133,7 +1108,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowairprim, value, "lowairprim");
 		}
 	}
-	private string _lowairsec;
+	private string _lowairsec = "Black";
 	public string lowairsec
 	{
 		get
@@ -1145,7 +1120,7 @@ public class Gauges : INotifyPropertyChanged
 			SetField(ref _lowairsec, value, "lowairsec");
 		}
 	}
-    private string _lowwater;
+    private string _lowwater = "Hidden";
     public string lowwater
     {
         get
@@ -1183,7 +1158,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _showvolts, value, "showvolts");
         }
     }
-    private string _abs;
+    private string _abs = "Hidden";
     public string abs
     {
         get
@@ -1195,7 +1170,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _abs, value, "abs");
         }
     }
-    private string _stopeng;
+    private string _stopeng = "";
     public string stopeng
     {
         get
@@ -1207,7 +1182,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _stopeng, value, "stopeng");
         }
     }
-    private string _checkeng;
+    private string _checkeng = "";
     public string checkeng
     {
         get
@@ -1219,7 +1194,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _checkeng, value, "checkeng");
         }
     }
-    private string _engprot;
+    private string _engprot = "";
     public string engprot
     {
         get
@@ -1231,7 +1206,7 @@ public class Gauges : INotifyPropertyChanged
             SetField(ref _engprot, value, "engprot");
         }
     }
-	private string _fuelvals;
+	private string _fuelvals = "";
 	public string fuelvals
 	{
 		get
