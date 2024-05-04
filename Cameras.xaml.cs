@@ -18,31 +18,44 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace RVDash
 {
-    /// <summary>
-    /// Interaction logic for Cameras.xaml
-    /// </summary>
-    public partial class Cameras : Window
+
+	/// <summary>
+	/// Interaction logic for Cameras.xaml
+	/// </summary>
+	public partial class Cameras : Window
     {
-        volatile BitmapFrame? frame = null;
+		private const int GWL_STYLE = -16;
+		private const int WS_SYSMENU = 0x80000;
+		[System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+		private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+		volatile BitmapFrame? frame = null;
         HttpClient client = new();
-        volatile bool go = true;
+        CancellationTokenSource? ctSrc = null;
         string url;
-        Task bg=null;
         public Cameras(string url)
         {
             InitializeComponent();
 			this.Closed += Cameras_Closed;
 			this.IsVisibleChanged += Cameras_IsVisibleChanged;
-			client.Timeout = TimeSpan.FromSeconds(2);
+			this.Loaded += Cameras_Loaded;
+			//client.Timeout = TimeSpan.FromSeconds(5);
 			this.url = url;
         }
-        private void Cameras_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+		private void Cameras_Loaded(object sender, RoutedEventArgs e)
+		{
+			var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+			SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
+		}
+		private void Cameras_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (!IsVisible)
-            {
-                go = false;
+			if (ctSrc != null && !ctSrc.IsCancellationRequested)
+				ctSrc.Cancel();
+            ctSrc = null;
+			if (!IsVisible)
                 return;
-            }
             if (Screen.AllScreens.Length > 1)
             {
                 foreach (Screen s in Screen.AllScreens)
@@ -66,9 +79,8 @@ namespace RVDash
                 this.WindowStyle = WindowStyle.ThreeDBorderWindow;
                 this.WindowState = WindowState.Normal;
             }
-            if (bg != null)
-				bg.Wait();
-			bg = Task.Run(() => GetImages(client, url));
+            ctSrc = new();
+			GetImages(client, url, ctSrc.Token);
         }
 		private void Cameras_Closed(object sender, EventArgs e) => client.Dispose();
         public void DoImage()
@@ -78,47 +90,46 @@ namespace RVDash
             theImg.Source = frame;
             frame = null;
         }
-        async Task GetImages(HttpClient client, string url)
+        async Task GetImages(HttpClient client, string url, CancellationToken canTok)
         {
-            go = true;
-			Trace.WriteLine("Starting");
+			//Trace.WriteLine("Looping");
 			var imageBuffer = new byte[1024 * 1024];
-            using var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-			Trace.WriteLine("Looping");
-			if (!resp.IsSuccessStatusCode)
-                throw new Exception(resp.StatusCode.ToString());
-
-            var ct = resp.Content.Headers.ContentType;
-            if (ct.MediaType != "multipart/x-mixed-replace")
-                throw new Exception("Bad media");
-
-            var bb = ct.Parameters.First();
-
-            using var st = await resp.Content.ReadAsStreamAsync();
-            var mr = new MultipartReader(bb.Value, st);
-			Trace.WriteLine("going");
-			while (go)
+            while (!ctSrc.IsCancellationRequested)
             {
-                Trace.WriteLine("Looping");
                 try
                 {
-                    if (!(await mr.ReadNextSectionAsync() is { } section))
-                        continue;
-                    if (frame != null) // ignores the frame if UI is not ready for another frame
-                        continue;
-                    await using var ms = new MemoryStream();
-                    await section.Body.CopyToAsync(ms);
-                    ms.Position = 0;
-                    var image = new JpegBitmapDecoder(ms, BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnLoad);
-                    frame = image.Frames[0];
-                    await Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Normal, new Action(DoImage));
+					using var resp = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, canTok);
+                    if (!resp.IsSuccessStatusCode)
+                        throw new Exception(resp.StatusCode.ToString());
+
+                    var ct = resp.Content.Headers.ContentType;
+                    if (ct.MediaType != "multipart/x-mixed-replace")
+                        throw new Exception("Bad media");
+
+                    var bb = ct.Parameters.First();
+
+                    using var st = await resp.Content.ReadAsStreamAsync(canTok);
+                    var mr = new MultipartReader(bb.Value, st);
+                    while (!canTok.IsCancellationRequested)
+                    {
+                        if (!(await mr.ReadNextSectionAsync(canTok) is { } section))
+                            continue;
+                        if (frame != null) // ignores the frame if UI is not ready for another frame
+                            continue;
+                        using var ms = new MemoryStream();
+                        await section.Body.CopyToAsync(ms, canTok);
+                        ms.Position = 0;
+                        var image = new JpegBitmapDecoder(ms, BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnLoad);
+                        frame = image.Frames[0];
+                        await Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(DoImage));
+                    }
                 }
+                catch (TaskCanceledException) { throw; }
                 catch(Exception e)
                 {
-                    Trace.WriteLine(e.Message);
                 }
+                finally { }
             }
-            Trace.WriteLine("leaving");
         }
     }
 }
