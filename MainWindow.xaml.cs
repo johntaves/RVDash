@@ -441,8 +441,8 @@ public partial class MainWindow : Window
                 case 100: gauges.oil = val / 2; gauges.lowoil = val < 20 ? "Yellow" : val < 10 ? "Red" : "Black"; break;
                 case 108: break; // barometer
                 case 102: gauges.boost = val / 8; break;
-                case 105: gauges.inttemp = val; gauges.lowinttemp = val < 70 && gauges.rpm < 0.5M ? "cornflowerblue" : "Black"; break;
-				case 110: gauges.water = val; gauges.hotwater = val > 217 ? "Yellow" : val > 225 ? "Red" : "Black"; break;
+                case 105: gauges.inttemp = val; gauges.lowinttemp = val < 63 && gauges.rpm < 0.5M ? "cornflowerblue" : "Black"; break;
+				case 110: gauges.water = val; gauges.hotwater = val > 210 ? "Yellow" : val > 220 ? "Red" : "Black"; break;
 				case 111: gauges.lowwater = val > 10 ? "Visible" : "Hidden"; break;
 				case 117: gauges.airPrim = val * 3 / 5; gauges.lowairprim = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
@@ -454,7 +454,9 @@ public partial class MainWindow : Window
                 case 162: gauges.transel = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
                     checkCamera();
 					break;
-                case 163: gauges.tranattain = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value)); break;
+                case 163: var gear = System.Text.Encoding.UTF8.GetString(BitConverter.GetBytes((UInt16)m.value));
+                    gauges.tranattain = gear.Replace("L", "");
+                    break;
 				case 168: { decimal v = (decimal)val * .05M;
                         gauges.volts = v.ToString("F1"); gauges.showvolts = v < 12.6M || showVolts ? "Visible" : "Hidden";
                         if (v < 12.6M) gauges.voltsBackground = "Red";
