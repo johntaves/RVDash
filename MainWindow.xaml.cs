@@ -442,7 +442,7 @@ public partial class MainWindow : Window
                 case 108: break; // barometer
                 case 102: gauges.boost = val / 8; break;
                 case 105: gauges.inttemp = val; gauges.lowinttemp = val < 70 && gauges.rpm < 0.5M ? "cornflowerblue" : "Black"; break;
-				case 110: gauges.water = val; gauges.hotwater = val > 217 ? "Yellow" : val > 225 ? "Red" : "Black"; break;
+				case 110: gauges.water = val; gauges.hotwater = val > 210 ? "Yellow" : val > 220 ? "Red" : "Black"; break;
 				case 111: gauges.lowwater = val > 10 ? "Visible" : "Hidden"; break;
 				case 117: gauges.airPrim = val * 3 / 5; gauges.lowairprim = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
                 case 118: gauges.airSec = val * 3 / 5; gauges.lowairsec = gauges.airPrim < 70 ? "Yellow" : "Black"; break;
