@@ -79,10 +79,7 @@
       </StackPanel>
     </Border>
     <Border MouseDown="AvgMPG_MouseDown" Canvas.Left="55" Canvas.Top="450">
-      <StackPanel Orientation="Horizontal">
-        <TextBlock Text="{Binding avgfuel}" Width="160" FontSize="80" />
-        <Label Content="Avg&#10;MPG" FontSize="30" VerticalAlignment="Bottom"/>
-      </StackPanel>
+      <StackPanel Orientation="Horizontal"/>
     </Border>
     <Border Canvas.Left="400" Canvas.Top="259" Visibility="{Binding cruise}">
       <StackPanel Orientation="Vertical">
@@ -353,6 +350,7 @@
         <BitmapImage  UriSource="rearview-mirror.png" />
       </Image.Source>
     </Image>
+    <Slider Canvas.Left="55" Canvas.Top="455" Width="425" Height="26" Maximum="100" Minimum="0" Value="{Binding brightness}"/>
   </Canvas>
 </Window>
   

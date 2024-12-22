@@ -26,7 +26,7 @@ public partial class MainWindow : Window
 	ushort curResFuel = 0;
 	private ulong savedTank = 0;
     private bool showVolts = false;
-    private bool Ign = false;
+	private bool Ign = false;
     public MainWindow()
     {
 		InitializeComponent();
@@ -42,10 +42,6 @@ public partial class MainWindow : Window
 		//Set the current value of the gauges
 		this.DataContext = gauges;
         CheckScreen();
-        var bc = new PhysicalMonitorBrightnessController();
-        var bval = bc.Get();
-        bc.Set(10);
-        bval = bc.Get();
         if (Environment.MachineName.Equals("dash", StringComparison.CurrentCultureIgnoreCase))
 		{
 			if (true)
@@ -741,8 +737,10 @@ public class Msg
 }
 public class Gauges : INotifyPropertyChanged
 {
-    // boiler-plate
-    public event PropertyChangedEventHandler PropertyChanged;
+	private PhysicalMonitorBrightnessController bc = new();
+
+	// boiler-plate
+	public event PropertyChangedEventHandler PropertyChanged;
     protected virtual void OnPropertyChanged(string propertyName)
     {
         PropertyChangedEventHandler handler = PropertyChanged;
@@ -759,182 +757,92 @@ public class Gauges : INotifyPropertyChanged
 	private string _volts;
     public string volts
     {
-        get
-        {
-            return _volts;
-        }
-        set
-        {
-            SetField(ref _volts, value, "volts");
-        }
+        get => _volts;
+        set => SetField(ref _volts, value, "volts");
     }
     private string _idiotlight;
     public string idiotlight
 	{
-		get
-		{
-			return _idiotlight;
-		}
-		set
-		{
-			SetField(ref _idiotlight, value, "idiotlight");
-		}
+		get => _idiotlight;
+		set => SetField(ref _idiotlight, value, "idiotlight");
 	}
 	private int _speed;
 	public int speed
 	{
-		get
-		{
-			return _speed;
-		}
-		set
-		{
-			SetField(ref _speed, value, "speed");
-		}
+		get => _speed;
+		set => SetField(ref _speed, value, "speed");
 	}
 	private int _setspeed;
     public int setspeed
     {
-        get
-        {
-            return _setspeed;
-        }
-        set
-        {
-            SetField(ref _setspeed, value, "setspeed");
-        }
+        get => _setspeed;
+        set => SetField(ref _setspeed, value, "setspeed");
     }
     private int _oil;
     public int oil
     {
-        get
-        {
-            return _oil;
-        }
-        set
-        {
-            SetField(ref _oil, value, "oil");
-        }
+        get => _oil;
+        set => SetField(ref _oil, value, "oil");
     }
     private string _hotwater = "Black";
     public string hotwater
     {
-        get
-        {
-            return _hotwater;
-        }
-        set
-        {
-            SetField(ref _hotwater, value, "hotwater");
-        }
+        get => _hotwater;
+        set => SetField(ref _hotwater, value, "hotwater");
     }
     private int _water;
     public int water
     {
-        get
-        {
-            return _water;
-        }
-        set
-        {
-            SetField(ref _water, value, "water");
-        }
+        get => _water;
+        set => SetField(ref _water, value, "water");
     }
 	private string _avgfuel;
 	public string avgfuel
 	{
-		get
-		{
-			return _avgfuel;
-		}
-		set
-		{
-			SetField(ref _avgfuel, value, "avgfuel");
-		}
+		get => _avgfuel;
+		set => SetField(ref _avgfuel, value, "avgfuel");
 	}
 	private string _instfuel = "0";
 	public string instfuel
 	{
-		get
-		{
-			return _instfuel;
-		}
-		set
-		{
-			SetField(ref _instfuel, value, "instfuel");
-		}
+		get => _instfuel;
+		set => SetField(ref _instfuel, value, "instfuel");
 	}
 	private decimal _rpm = 0;
 	public decimal rpm
 	{
-		get
-		{
-			return _rpm;
-		}
-		set
-		{
-			SetField(ref _rpm, value, "rpm");
-		}
+		get => _rpm;
+		set => SetField(ref _rpm, value, "rpm");
 	}
 	private int _airPrim = 0;
     public int airPrim
     {
-        get
-        {
-            return _airPrim;
-        }
-        set
-        {
-            SetField(ref _airPrim, value, "airPrim");
-        }
+        get => _airPrim;
+        set => SetField(ref _airPrim, value, "airPrim");
     }
     private int _airSec = 0;
     public int airSec
     {
-        get
-        {
-            return _airSec;
-        }
-        set
-        {
-            SetField(ref _airSec, value, "airSec");
-        }
+        get => _airSec;
+        set => SetField(ref _airSec, value, "airSec");
     }
     private int _transTemp = 0;
     public int transTemp
     {
-        get
-        {
-            return _transTemp;
-        }
-        set
-        {
-            SetField(ref _transTemp, value, "transTemp");
-        }
+        get => _transTemp;
+        set => SetField(ref _transTemp, value, "transTemp");
     }
     private int _boost = 0;
     public int boost
     {
-        get
-        {
-            return _boost;
-        }
-        set
-        {
-            SetField(ref _boost, value, "boost");
-        }
+        get => _boost;
+        set => SetField(ref _boost, value, "boost");
     }
     private string _miles = "?";
     public string miles
     {
-        get
-        {
-            return _miles;
-        }
-        set
-        {
-            SetField(ref _miles, value, "miles");
-        }
+        get => _miles;
+        set => SetField(ref _miles, value, "miles");
     }
     public void Tick()
     {
@@ -947,304 +855,159 @@ public class Gauges : INotifyPropertyChanged
 	private string _transel = "N";
 	public string transel
 	{
-		get
-		{
-			return _transel;
-		}
-		set
-		{
-			SetField(ref _transel, value, "transel");
-		}
+		get => _transel;
+		set => SetField(ref _transel, value, "transel");
 	}
 	private string _tranattain = "0";
 	public string tranattain
 	{
-		get
-		{
-			return _tranattain;
-		}
-		set
-		{
-			SetField(ref _tranattain, value, "tranattain");
-		}
+		get => _tranattain;
+		set => SetField(ref _tranattain, value, "tranattain");
 	}
 	private string _retarder = "Hidden";
 	public string retarder
 	{
-		get
-		{
-			return _retarder;
-		}
-		set
-		{
-			SetField(ref _retarder, value, "retarder");
-		}
+		get => _retarder;
+		set => SetField(ref _retarder, value, "retarder");
 	}
 	private string _retardersw = "Hidden";
     public string retardersw
     {
-        get
-        {
-            return _retardersw;
-        }
-        set
-        {
-            SetField(ref _retardersw, value, "retardersw");
-        }
+        get => _retardersw;
+        set => SetField(ref _retardersw, value, "retardersw");
     }
 	private string _cruise = "Hidden";
 	public string cruise
 	{
-		get
-		{
-			return _cruise;
-		}
-		set
-		{
-			SetField(ref _cruise, value, "cruise");
-		}
+		get => _cruise;
+		set => SetField(ref _cruise, value, "cruise");
 	}
 	private string _cruiseact = "Hidden";
 	public string cruiseact
 	{
-		get
-		{
-			return _cruiseact;
-		}
-		set
-		{
-			SetField(ref _cruiseact, value, "cruiseact");
-		}
+		get => _cruiseact;
+		set => SetField(ref _cruiseact, value, "cruiseact");
 	}
 	private string _leftturn = "Black";
 	public string leftturn
 	{
-		get
-		{
-			return _leftturn;
-		}
-		set
-		{
-			SetField(ref _leftturn, value, "leftturn");
-		}
+		get => _leftturn;
+		set => SetField(ref _leftturn, value, "leftturn");
 	}
 	private string _drawers = "Hidden";
 	public string drawers
 	{
-		get
-		{
-			return _drawers;
-		}
-		set
-		{
-			SetField(ref _drawers, value, "drawers");
-		}
+		get => _drawers;
+		set => SetField(ref _drawers, value, "drawers");
 	}
 	private string _high = "Black";
 	public string high
 	{
-		get
-		{
-			return _high;
-		}
-		set
-		{
-			SetField(ref _high, value, "high");
-		}
+		get => _high;
+		set => SetField(ref _high, value, "high");
 	}
 	private string _lowfuel = "Black";
 	public string lowfuel
 	{
-		get
-		{
-			return _lowfuel;
-		}
-		set
-		{
-			SetField(ref _lowfuel, value, "lowfuel");
-		}
+		get => _lowfuel;
+		set => SetField(ref _lowfuel, value, "lowfuel");
 	}
 	private string _lowinttemp = "Black";
 	public string lowinttemp
 	{
-		get
-		{
-			return _lowinttemp;
-		}
-		set
-		{
-			SetField(ref _lowinttemp, value, "lowinttemp");
-		}
+		get => _lowinttemp;
+		set => SetField(ref _lowinttemp, value, "lowinttemp");
 	}
 	private string _rightturn = "Black";
     public string rightturn
     {
-        get
-        {
-            return _rightturn;
-        }
-        set
-        {
-            SetField(ref _rightturn, value, "rightturn");
-        }
+        get => _rightturn;
+        set => SetField(ref _rightturn, value, "rightturn");
     }
 	private string _lowoil = "Black";
 	public string lowoil
 	{
-		get
-		{
-			return _lowoil;
-		}
-		set
-		{
-			SetField(ref _lowoil, value, "lowoil");
-		}
+		get => _lowoil;
+		set => SetField(ref _lowoil, value, "lowoil");
 	}
 	private string _lowairprim = "Black";
 	public string lowairprim
 	{
-		get
-		{
-			return _lowairprim;
-		}
-		set
-		{
-			SetField(ref _lowairprim, value, "lowairprim");
-		}
+		get =>  _lowairprim;
+		set => SetField(ref _lowairprim, value, "lowairprim");
 	}
 	private string _lowairsec = "Black";
 	public string lowairsec
 	{
-		get
-		{
-			return _lowairsec;
-		}
-		set
-		{
-			SetField(ref _lowairsec, value, "lowairsec");
-		}
+		get => _lowairsec;
+		set => SetField(ref _lowairsec, value, "lowairsec");
 	}
+    public uint brightness
+    {
+        get => (uint)bc.Get();
+        set => bc.Set(value);
+    }
     private string _lowwater = "Hidden";
     public string lowwater
     {
-        get
-        {
-            return _lowwater;
-        }
-        set
-        {
-            SetField(ref _lowwater, value, "lowwater");
-        }
+        get => _lowwater;
+        set => SetField(ref _lowwater, value, "lowwater");
     }
     private string _showmpg = "Hidden";
     public string showmpg
     {
-        get
-        {
-            return _showmpg;
-        }
-        set
-        {
-            SetField(ref _showmpg, value, "showmpg");
-        }
+        get => _showmpg;
+        set => SetField(ref _showmpg, value, "showmpg");
     }
     private string _voltsBackground = "black";
     public string voltsBackground { get { return _voltsBackground; } set { SetField(ref _voltsBackground, value, "voltsBackground"); } }
     private string _showvolts = "Hidden";
     public string showvolts
     {
-        get
-        {
-            return _showvolts;
-        }
-        set
-        {
-            SetField(ref _showvolts, value, "showvolts");
-        }
+        get => _showvolts;
+        set => SetField(ref _showvolts, value, "showvolts");
     }
     private string _abs = "Hidden";
     public string abs
     {
-        get
-        {
-            return _abs;
-        }
-        set
-        {
-            SetField(ref _abs, value, "abs");
-        }
+        get => _abs;
+        set => SetField(ref _abs, value, "abs");
     }
     private string _stopeng = "";
     public string stopeng
     {
-        get
-        {
-            return _stopeng;
-        }
-        set
-        {
-            SetField(ref _stopeng, value, "stopeng");
-        }
+        get => _stopeng;
+        set => SetField(ref _stopeng, value, "stopeng");
     }
     private string _checkeng = "";
     public string checkeng
     {
-        get
-        {
-            return _checkeng;
-        }
-        set
-        {
-            SetField(ref _checkeng, value, "checkeng");
-        }
+        get => _checkeng;
+        set => SetField(ref _checkeng, value, "checkeng");
     }
     private string _engprot = "";
     public string engprot
     {
-        get
-        {
-            return _engprot;
-        }
-        set
-        {
-            SetField(ref _engprot, value, "engprot");
-        }
+        get => _engprot;
+        set => SetField(ref _engprot, value, "engprot");
     }
 	private string _fuelvals = "";
 	public string fuelvals
 	{
-		get
-		{
-			return _fuelvals;
-		}
-		set
-		{
-			SetField(ref _fuelvals, value, "fuelvals");
-		}
+		get => _fuelvals;
+		set => SetField(ref _fuelvals, value, "fuelvals");
 	}
 	private int _fuel;
 	public int fuel
 	{
-		get
-		{
-			return _fuel;
-		}
-		set
-		{
-			SetField(ref _fuel, value, "fuel");
-		}
+		get => _fuel;
+		set => SetField(ref _fuel, value, "fuel");
 	}
 	private int _inttemp;
     public int inttemp
     {
-        get
-        {
-            return _inttemp;
-        }
-        set
-        {
-            SetField(ref _inttemp, value, "inttemp");
-        }
+        get => _inttemp;
+        set => SetField(ref _inttemp, value, "inttemp");
     }
 }
 public class Dat
