@@ -350,7 +350,6 @@
         <BitmapImage  UriSource="rearview-mirror.png" />
       </Image.Source>
     </Image>
-    <Slider Canvas.Left="55" Canvas.Top="455" Width="425" Height="26" Maximum="100" Minimum="0" Value="{Binding brightness}"/>
   </Canvas>
 </Window>
   
